@@ -7,16 +7,40 @@ namespace DbUpdater.Services
     public class Fetcher
     {
         private readonly HttpClient _httpClient;
-        private readonly EcoDb _dbContext;
+        private readonly IServiceProvider _serviceProvider;
         private readonly string _apiKey = "43a9c96070de402787d60222261205";
 
-        public Fetcher(HttpClient httpClient, EcoDb ecoDb)
+        public Fetcher(HttpClient httpClient, IServiceProvider serviceProvider)
         {
             _httpClient = httpClient;
-            _dbContext = ecoDb;
+            _serviceProvider = serviceProvider;
         }
 
-        public async Task UpdateDataAsync(string cityName)
+        public async Task UpdateWeatherDataAsync()
+        {
+            var cityNames = await File.ReadAllLinesAsync("./CSVData/worldcities.csv");
+            var validCitiesName = cityNames
+                .Select(x => x.Trim().Replace("’", "'").Replace("‘", "'"))
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .ToArray();
+
+            await Parallel.ForEachAsync(validCitiesName, new ParallelOptions { MaxDegreeOfParallelism = 10 }, async (city, token) =>
+            {
+                try
+                {
+                    var scope = _serviceProvider.CreateScope();
+                    var dbContext = scope.ServiceProvider.GetRequiredService<EcoDb>();
+
+                    await UpdateConcreteWeatherAsync(city, dbContext);
+                }
+                catch (Exception ex)
+                {
+                    System.Console.WriteLine(ex.Message);
+                }
+            });
+        }
+
+        public async Task UpdateConcreteWeatherAsync(string cityName, EcoDb _dbContext)
         {
             var fetchedRecord = await _httpClient.GetFromJsonAsync<WeatherRecord>
                 ($"https://api.weatherapi.com/v1/current.json?key={_apiKey}&q={cityName}&aqi=yes");
