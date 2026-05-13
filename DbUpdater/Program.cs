@@ -1,3 +1,5 @@
+using DbUpdater.Data;
+using DbUpdater.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
