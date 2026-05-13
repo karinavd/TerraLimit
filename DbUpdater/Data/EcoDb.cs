@@ -11,5 +11,6 @@ namespace DbUpdater.Data
         }
 
         public DbSet<WeatherRecord> WeatherRecords { get; set; }
+        public DbSet<WaterRecord> WaterRecords { get; set; }
     }
 }
