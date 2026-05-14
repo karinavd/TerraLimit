@@ -1,31 +1,32 @@
 using DbUpdater.Data;
 using DbUpdater.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
-var builder = WebApplication.CreateBuilder(args);
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.Development.json", optional: false, reloadOnChange: true)
+    .Build();
 
-// Add services to the container.
-builder.Services.AddDbContext<EcoDb>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+var builder = new ServiceCollection();
 
-builder.Services.AddScoped<Fetcher>();
-builder.Services.AddScoped<WaterFetcher>();
+builder.AddDbContext<EcoDb>(options =>
+    options.UseNpgsql(configuration.GetConnectionString("Default")));
 
-builder.Services.AddHttpClient();
+builder.AddScoped<Fetcher>();
+builder.AddScoped<WaterFetcher>();
+builder.AddHttpClient();
 
-var app = builder.Build();
+var app = builder.BuildServiceProvider();
 
-using (var scope = app.Services.CreateScope())
-{
-    var fetcher = scope.ServiceProvider.GetRequiredService<Fetcher>();
-    var waterFetcher = scope.ServiceProvider.GetRequiredService<WaterFetcher>();
-    await waterFetcher.GetWaterDataAsync();
-    await fetcher.UpdateWeatherDataAsync();
-}
+using var scope = app.CreateScope();
+var fetcher = scope.ServiceProvider.GetRequiredService<Fetcher>();
+var waterFetcher = scope.ServiceProvider.GetRequiredService<WaterFetcher>();
 
-// Configure the HTTP request pipeline.
-app.UseHttpsRedirection();
+System.Console.WriteLine("Db updater started");
 
-app.MapGet("/", () => "Fetch is succesfully done.");
+await waterFetcher.GetWaterDataAsync();
+await fetcher.UpdateWeatherDataAsync();
 
-app.Run();
+System.Console.WriteLine("Db updated");

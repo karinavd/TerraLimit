@@ -1,6 +1,8 @@
 using DbUpdater.Data;
 using DbUpdater.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using System.Net.Http.Json;
 
 namespace DbUpdater.Services
 {
@@ -28,15 +30,12 @@ namespace DbUpdater.Services
             {
                 try
                 {
-                    var scope = _serviceProvider.CreateScope();
+                    using var scope = _serviceProvider.CreateScope();
                     var dbContext = scope.ServiceProvider.GetRequiredService<EcoDb>();
 
                     await UpdateConcreteWeatherAsync(city, dbContext);
                 }
-                catch (Exception ex)
-                {
-                    System.Console.WriteLine(ex.Message);
-                }
+                catch { }
             });
         }
 
