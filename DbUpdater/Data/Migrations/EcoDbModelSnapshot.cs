@@ -52,7 +52,7 @@ namespace DbUpdater.Migrations
 
                     b.HasIndex("StationId");
 
-                    b.ToTable("WaterRecords");
+                    b.ToTable("WaterRecords", (string)null);
                 });
 
             modelBuilder.Entity("DbUpdater.Models.WaterStation", b =>
@@ -74,7 +74,7 @@ namespace DbUpdater.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("WaterStations");
+                    b.ToTable("WaterStations", (string)null);
                 });
 
             modelBuilder.Entity("DbUpdater.Models.WeatherRecord", b =>
@@ -87,7 +87,7 @@ namespace DbUpdater.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("WeatherRecords");
+                    b.ToTable("WeatherRecords", (string)null);
                 });
 
             modelBuilder.Entity("DbUpdater.Models.WaterRecord", b =>
@@ -178,7 +178,7 @@ namespace DbUpdater.Migrations
 
                             b1.HasKey("WeatherRecordId");
 
-                            b1.ToTable("WeatherRecords");
+                            b1.ToTable("WeatherRecords", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("WeatherRecordId");
@@ -217,7 +217,7 @@ namespace DbUpdater.Migrations
 
                                     b2.HasKey("CurrentWeatherRecordId");
 
-                                    b2.ToTable("WeatherRecords");
+                                    b2.ToTable("WeatherRecords", (string)null);
 
                                     b2.HasJsonPropertyName("air_quality");
 
@@ -241,7 +241,7 @@ namespace DbUpdater.Migrations
 
                                     b2.HasKey("CurrentWeatherRecordId");
 
-                                    b2.ToTable("WeatherRecords");
+                                    b2.ToTable("WeatherRecords", (string)null);
 
                                     b2.WithOwner()
                                         .HasForeignKey("CurrentWeatherRecordId");
@@ -285,7 +285,7 @@ namespace DbUpdater.Migrations
 
                             b1.HasKey("WeatherRecordId");
 
-                            b1.ToTable("WeatherRecords");
+                            b1.ToTable("WeatherRecords", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("WeatherRecordId");

@@ -9,7 +9,8 @@ class DbDesignFactory : IDesignTimeDbContextFactory<EcoDb>
     {
         var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.Development.json")
+                .AddJsonFile("appsettings.json")
+                .AddUserSecrets<DbDesignFactory>()
                 .Build();
 
         var builder = new DbContextOptionsBuilder<EcoDb>();

@@ -1,6 +1,7 @@
 using DbUpdater.Data;
 using DbUpdater.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http.Json;
 
@@ -10,12 +11,13 @@ namespace DbUpdater.Services
     {
         private readonly HttpClient _httpClient;
         private readonly IServiceProvider _serviceProvider;
-        private readonly string _apiKey = "43a9c96070de402787d60222261205";
+        private readonly string _apiKey;
 
-        public Fetcher(HttpClient httpClient, IServiceProvider serviceProvider)
+        public Fetcher(HttpClient httpClient, IServiceProvider serviceProvider, IConfiguration configuration)
         {
             _httpClient = httpClient;
             _serviceProvider = serviceProvider;
+            _apiKey = configuration["WeatherApi:ApiKey"];
         }
 
         public async Task UpdateWeatherDataAsync()
