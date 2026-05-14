@@ -27,6 +27,6 @@ var waterFetcher = scope.ServiceProvider.GetRequiredService<WaterFetcher>();
 System.Console.WriteLine("Db updater started");
 
 await waterFetcher.GetWaterDataAsync();
-await fetcher.UpdateWeatherDataAsync();
+// await fetcher.UpdateWeatherDataAsync();
 
 System.Console.WriteLine("Db updated");
