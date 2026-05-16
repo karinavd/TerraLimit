@@ -49,12 +49,14 @@ namespace DbUpdater.Services
                 using var stationCsv = new CsvReader(stationReader, config);
 
                 var waterStations = stationCsv.GetRecords<WaterStation>().DistinctBy(s => s.Id).ToList();
+                var existingWStations = new HashSet<string>(await _dbContext.WaterStations.Select(s => s.Id).ToListAsync());
 
                 foreach (var station in waterStations)
                 {
-                    if (!_dbContext.WaterStations.Any(s => s.Id == station.Id))
+                    if (!existingWStations.Contains(station.Id))
                     {
                         _dbContext.WaterStations.Add(station);
+                        existingWStations.Add(station.Id);
                     }
                 }
 
@@ -66,26 +68,41 @@ namespace DbUpdater.Services
                 foreach (var fName in fileNames)
                 {
                     var waterQualityFile = archive.Entries.FirstOrDefault(e => e.Name.Equals(fName, StringComparison.OrdinalIgnoreCase));
+                    if (waterQualityFile == null) continue;
 
                     using var waterQualityFileStream = waterQualityFile.Open();
 
                     using var waterReader = new StreamReader(waterQualityFileStream);
                     using var waterCsv = new CsvReader(waterReader, config);
 
-                    var allWaterRecords = waterCsv.GetRecords<WaterRecord>();
-                    var waterRecords = allWaterRecords.AsEnumerable().Reverse().DistinctBy(x => x.StationId).Reverse().ToList();
+                    var latestWaterRecords = new Dictionary<string, WaterRecord>();
 
-                    foreach (var record in waterRecords)
+                    foreach (var rec in waterCsv.GetRecords<WaterRecord>())
                     {
-                        var existingRecord = await _dbContext.WaterRecords.FirstOrDefaultAsync(r => r.ParameterCode == record.ParameterCode
-                                                                                                 && r.StationId == record.StationId);
-                        if (existingRecord == null)
+                        latestWaterRecords[rec.StationId] = rec;
+                    }
+
+                    if (latestWaterRecords.Count == 0) continue;
+
+                    var currParamCodes = latestWaterRecords.Values.Select(r => r.ParameterCode)
+                                                                  .Distinct()
+                                                                  .ToArray();
+                    var existingWRecordsList = await _dbContext.WaterRecords.Where(r => currParamCodes.Contains(r.ParameterCode))
+                                                                        .Select(r => r.StationId)
+                                                                        .ToListAsync();
+                    var existingWRecords = new HashSet<string>(existingWRecordsList);
+
+                    foreach (var record in latestWaterRecords.Values)
+                    {
+                        if (!existingWRecords.Contains(record.StationId))
                         {
                             _dbContext.WaterRecords.Add(record);
+                            existingWRecords.Add(record.StationId);
                         }
                     }
 
                     await _dbContext.SaveChangesAsync();
+                    _dbContext.ChangeTracker.Clear();
                 }
             }
             finally
