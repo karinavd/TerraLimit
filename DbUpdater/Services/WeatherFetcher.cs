@@ -22,32 +22,51 @@ namespace DbUpdater.Services
 
         public async Task UpdateWeatherDataAsync()
         {
-            var cityNames = await File.ReadAllLinesAsync("./CSVData/worldcities.csv");
+            var cityNames = await File.ReadAllLinesAsync(Path.Combine(Directory.GetCurrentDirectory(), "CSVData", "worldcities.txt"));
             var validCitiesName = cityNames
                 .Select(x => x.Trim().Replace("’", "'").Replace("‘", "'"))
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .ToArray();
 
-            await Parallel.ForEachAsync(validCitiesName, new ParallelOptions { MaxDegreeOfParallelism = 10 }, async (city, token) =>
+            Dictionary<string, string> requiredWeatherData;
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<EcoDb>();
+
+                var rawDbData = await dbContext.WeatherRecords
+                    .Select(r => new { r.Location.Name, r.Current.LastUpdated })
+                    .ToListAsync();
+
+                requiredWeatherData = rawDbData
+                    .DistinctBy(x => x.Name)
+                    .ToDictionary(x => x.Name, x => x.LastUpdated);
+            }
+
+            await Parallel.ForEachAsync(validCitiesName, new ParallelOptions { MaxDegreeOfParallelism = 50 }, async (city, token) =>
             {
                 try
                 {
+                    var fetchedRecord = await _httpClient.GetFromJsonAsync<WeatherRecord>
+                        ($"https://api.weatherapi.com/v1/current.json?key={_apiKey}&q={city}&aqi=yes", token);
+
+                    if (fetchedRecord == null || fetchedRecord.Location == null) return;
+
+                    if (requiredWeatherData.TryGetValue(fetchedRecord.Location.Name, out var savedLastUpdated))
+                    {
+                        if (savedLastUpdated == fetchedRecord.Current.LastUpdated) return;
+                    }
+
                     using var scope = _serviceProvider.CreateScope();
                     var dbContext = scope.ServiceProvider.GetRequiredService<EcoDb>();
 
-                    await UpdateConcreteWeatherAsync(city, dbContext);
+                    await UpdateConcreteWeatherAsync(fetchedRecord, dbContext);
                 }
                 catch { }
             });
         }
 
-        public async Task UpdateConcreteWeatherAsync(string cityName, EcoDb _dbContext)
+        private static async Task UpdateConcreteWeatherAsync(WeatherRecord fetchedRecord, EcoDb _dbContext)
         {
-            var fetchedRecord = await _httpClient.GetFromJsonAsync<WeatherRecord>
-                ($"https://api.weatherapi.com/v1/current.json?key={_apiKey}&q={cityName}&aqi=yes");
-
-            if (fetchedRecord == null) return;
-
             var existingRecord = await _dbContext.WeatherRecords.FirstOrDefaultAsync(record => record.Location.Name == fetchedRecord.Location.Name);
 
             if (existingRecord != null)
