@@ -1,6 +1,8 @@
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using TerraLimit.Api.Data;
+using TerraLimit.Api.Endpoints;
+using TerraLimit.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +18,9 @@ var configuration = new ConfigurationBuilder()
     .Build();
 
 builder.Services.AddSingleton<IConfiguration>(configuration);
-builder.Services.AddDbContext<EcoState>(options => options.UseNpgsql(configuration.GetConnectionString("Defalut")));
+builder.Services.AddDbContext<EcoState>(options => options.UseNpgsql(configuration.GetConnectionString("Default")));
+
+builder.Services.AddScoped<WeatherService>();
 
 var app = builder.Build();
 
@@ -26,5 +30,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.MapWeatherEndpoints();
 
 app.Run();
