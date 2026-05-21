@@ -47,13 +47,15 @@ namespace TerraLimit.Api.Services
 
         public async Task<List<AirQualityIndexDTO>> GetAllAirQualityAsync(int offset, int limit)
         {
-            return await _dbContext.AirQualityIndexes
+            var aqs = await _dbContext.AirQualityIndexes
                 .AsNoTracking()
                 .OrderBy(l => l.RecordId)
-                .Select(o => o.ToDTO())
+                .Select(o => o)
                 .Skip(offset)
                 .Take(limit)
                 .ToListAsync();
+
+            return [.. aqs.Select(aq => aq.ToDTO())];
         }
 
         public async Task<AirQualityIndexDTO?> GetAirQualityAsync(int id)
