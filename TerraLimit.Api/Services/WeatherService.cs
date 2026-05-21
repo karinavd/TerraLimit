@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TerraLimit.Api.Data;
+using TerraLimit.Api.DTOs;
+using TerraLimit.Api.Extensions;
 using TerraLimit.Api.Models;
 
 namespace TerraLimit.Api.Services
@@ -25,6 +27,22 @@ namespace TerraLimit.Api.Services
         public async Task<WeatherLocation?> GetWeatherLocationAsync(int id)
         {
             return await _dbContext.WeatherLocations.FindAsync(id);
+        }
+
+        public async Task<List<WeatherObservationDTO>> GetAllWeatherObservationsAsync(int offset, int limit)
+        {
+            return await _dbContext.WeatherObservations
+                .AsNoTracking()
+                .OrderBy(l => l.LocationId)
+                .Select(o => o.ToDTO())
+                .Skip(offset)
+                .Take(limit)
+                .ToListAsync();
+        }
+
+        public async Task<WeatherObservationDTO?> GetWeatherObservationAsync(int id)
+        {
+            return (await _dbContext.WeatherObservations.FindAsync(id))?.ToDTO();
         }
     }
 }

@@ -11,6 +11,9 @@ namespace TerraLimit.Api.Endpoints
             group.MapGet("/locations/{id}", GetWeatherLocationAsync);
             group.MapGet("/locations", GetAllWeatherLocationsAsync);
 
+            group.MapGet("/observations/{id}", GetWeatherObservationAsync);
+            group.MapGet("/observations", GetAllWeatherObservationsAsync);
+
             return group;
         }
 
@@ -24,6 +27,18 @@ namespace TerraLimit.Api.Endpoints
         {
             var locations = await weatherService.GetAllWeatherLocationsAsync(offset, limit);
             return locations?.Count == 0 ? TypedResults.NotFound("Locations list is empty") : TypedResults.Ok(locations);
+        }
+
+        private static async Task<IResult> GetWeatherObservationAsync(WeatherService weatherService, int id)
+        {
+            var observation = await weatherService.GetWeatherObservationAsync(id);
+            return observation is null ? TypedResults.NotFound("Observation not found") : TypedResults.Ok(observation);
+        }
+
+        private static async Task<IResult> GetAllWeatherObservationsAsync(WeatherService weatherService, int offset = 0, int limit = 100)
+        {
+            var observations = await weatherService.GetAllWeatherObservationsAsync(offset, limit);
+            return observations?.Count == 0 ? TypedResults.NotFound("Observations list is empty") : TypedResults.Ok(observations);
         }
     }
 }
