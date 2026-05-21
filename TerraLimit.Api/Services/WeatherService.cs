@@ -12,13 +12,14 @@ namespace TerraLimit.Api.Services
             _dbContext = dbContext;
         }
 
-        public async Task<List<WeatherLocation>?> GetAllWeatherLocationsAsync(int offset, int limit)
+        public async Task<List<WeatherLocation>> GetAllWeatherLocationsAsync(int offset, int limit)
         {
-            var orderedQuery = _dbContext.WeatherLocations.AsQueryable().OrderBy(l => l.LocationId);
-
-            var paginatedQuery = orderedQuery.Skip(offset).Take(limit);
-
-            return await paginatedQuery.ToListAsync();
+            return await _dbContext.WeatherLocations
+                .AsNoTracking()
+                .OrderBy(l => l.LocationId)
+                .Skip(offset)
+                .Take(limit)
+                .ToListAsync();
         }
 
         public async Task<WeatherLocation?> GetWeatherLocationAsync(int id)
