@@ -64,5 +64,23 @@ namespace TerraLimit.Api.Services
         {
             return (await _dbContext.AirQualityIndexes.FindAsync(id))?.ToDTO();
         }
+
+        public async Task<List<AtmosphereMetricDTO>> GetAllAtmosphereMetricsAsync(int offset, int limit)
+        {
+            var ams = await _dbContext.AtmosphereMetrics
+                .AsNoTracking()
+                .OrderBy(l => l.RecordId)
+                .Select(o => o)
+                .Skip(offset)
+                .Take(limit)
+                .ToListAsync();
+
+            return [.. ams.Select(am => am.ToDTO())];
+        }
+
+        public async Task<AtmosphereMetricDTO?> GetAtmosphereMetricAsync(int id)
+        {
+            return (await _dbContext.AtmosphereMetrics.FindAsync(id))?.ToDTO();
+        }
     }
 }
