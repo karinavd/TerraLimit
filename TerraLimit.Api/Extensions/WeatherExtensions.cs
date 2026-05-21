@@ -32,5 +32,23 @@ namespace TerraLimit.Api.Extensions
                 UsEpaIndex = aq.UsEpaIndex
             };
         }
+
+        public static AtmosphereMetricDTO ToDTO(this AtmosphereMetric am)
+        {
+            return new AtmosphereMetricDTO
+            {
+                RecordId = am.RecordId,
+                CloudCoverPct = am.CloudCoverPct,
+                FeelsLikeC = am.FeelsLikeC,
+                HumidityPct = am.HumidityPct,
+                PrecipitationMm = am.PrecipitationMm,
+                PressureMb = am.PressureMb,
+                TemperatureC = am.TemperatureC,
+                UvIndex = am.UvIndex,
+                WindDegree = am.WindDegree,
+                WindDirection = am.WindDirection,
+                WindSpeedKph = am.WindSpeedKph
+            };
+        }
     }
 }
