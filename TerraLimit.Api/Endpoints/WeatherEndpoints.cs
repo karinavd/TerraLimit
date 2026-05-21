@@ -20,7 +20,7 @@ namespace TerraLimit.Api.Endpoints
             return location is null ? TypedResults.NotFound("Location not found") : TypedResults.Ok(location);
         }
 
-        private static async Task<IResult> GetAllWeatherLocationsAsync(WeatherService weatherService, int offset = 0, int limit = 100)
+        private static async Task<IResult> GetAllWeatherLocationsAsync(WeatherService weatherService, int offset = 0, int limit = 10000)
         {
             var locations = await weatherService.GetAllWeatherLocationsAsync(offset, limit);
             return locations?.Count == 0 ? TypedResults.NotFound("Locations list is empty") : TypedResults.Ok(locations);

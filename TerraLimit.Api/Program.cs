@@ -22,8 +22,17 @@ builder.Services.AddDbContext<EcoState>(options => options.UseNpgsql(configurati
 
 builder.Services.AddScoped<WeatherService>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendPolicy", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .WithMethods("GET", "POST", "PUT", "DELETE")
+              .WithHeaders("Content-Type", "Authorization");
+    });
+});
 var app = builder.Build();
-
+app.UseCors("FrontendPolicy");
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
