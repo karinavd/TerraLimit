@@ -14,8 +14,8 @@ namespace TerraLimit.Api.Endpoints
             group.MapGet("/observations/{id}", GetWeatherObservationAsync);
             group.MapGet("/observations", GetAllWeatherObservationsAsync);
 
-            group.MapGet("/airqualities/{id}", GetAirQualityAsync);
-            group.MapGet("/airqualities", GetAllAirQualityAsync);
+            group.MapGet("/air_qualities/{id}", GetAirQualityAsync);
+            group.MapGet("/air_qualities", GetAllAirQualityAsync);
 
             group.MapGet("/atmosphere_metrics/{id}", GetAtmosphereMetricAsync);
             group.MapGet("/atmosphere_metrics", GetAllAtmosphereMetricsAsync);
@@ -25,26 +25,26 @@ namespace TerraLimit.Api.Endpoints
 
         private static async Task<IResult> GetWeatherLocationAsync(WeatherService weatherService, int id)
         {
-            var location = await weatherService.GetWeatherLocationAsync(id);
-            return location is null ? TypedResults.NotFound("Location not found") : TypedResults.Ok(location);
+            var wl = await weatherService.GetWeatherLocationAsync(id);
+            return wl is null ? TypedResults.NotFound("Location not found") : TypedResults.Ok(wl);
         }
 
         private static async Task<IResult> GetAllWeatherLocationsAsync(WeatherService weatherService, int offset = 0, int limit = 10000)
         {
-            var locations = await weatherService.GetAllWeatherLocationsAsync(offset, limit);
-            return locations?.Count == 0 ? TypedResults.NotFound("Locations list is empty") : TypedResults.Ok(locations);
+            var wls = await weatherService.GetAllWeatherLocationsAsync(offset, limit);
+            return wls?.Count == 0 ? TypedResults.NotFound("Locations list is empty") : TypedResults.Ok(wls);
         }
 
         private static async Task<IResult> GetWeatherObservationAsync(WeatherService weatherService, int id)
         {
-            var observation = await weatherService.GetWeatherObservationAsync(id);
-            return observation is null ? TypedResults.NotFound("Observation not found") : TypedResults.Ok(observation);
+            var wo = await weatherService.GetWeatherObservationAsync(id);
+            return wo is null ? TypedResults.NotFound("Observation not found") : TypedResults.Ok(wo);
         }
 
         private static async Task<IResult> GetAllWeatherObservationsAsync(WeatherService weatherService, int offset = 0, int limit = 100)
         {
-            var observations = await weatherService.GetAllWeatherObservationsAsync(offset, limit);
-            return observations?.Count == 0 ? TypedResults.NotFound("Observations list is empty") : TypedResults.Ok(observations);
+            var wos = await weatherService.GetAllWeatherObservationsAsync(offset, limit);
+            return wos?.Count == 0 ? TypedResults.NotFound("Observations list is empty") : TypedResults.Ok(wos);
         }
 
         private static async Task<IResult> GetAirQualityAsync(WeatherService weatherService, int id)

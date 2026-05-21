@@ -14,19 +14,21 @@ namespace TerraLimit.Api.Services
             _dbContext = dbContext;
         }
 
-        public async Task<List<WeatherLocation>> GetAllWeatherLocationsAsync(int offset, int limit)
+        public async Task<List<WeatherLocationDTO>> GetAllWeatherLocationsAsync(int offset, int limit)
         {
-            return await _dbContext.WeatherLocations
+            var wls = await _dbContext.WeatherLocations
                 .AsNoTracking()
                 .OrderBy(l => l.LocationId)
                 .Skip(offset)
                 .Take(limit)
                 .ToListAsync();
+
+            return [.. wls.Select(wl => wl.ToDTO())];
         }
 
-        public async Task<WeatherLocation?> GetWeatherLocationAsync(int id)
+        public async Task<WeatherLocationDTO?> GetWeatherLocationAsync(int id)
         {
-            return await _dbContext.WeatherLocations.FindAsync(id);
+            return (await _dbContext.WeatherLocations.FindAsync(id))?.ToDTO();
         }
 
         public async Task<List<WeatherObservationDTO>> GetAllWeatherObservationsAsync(int offset, int limit)
@@ -34,7 +36,6 @@ namespace TerraLimit.Api.Services
             var observations = await _dbContext.WeatherObservations
                 .AsNoTracking()
                 .OrderBy(l => l.LocationId)
-                .Select(o => o)
                 .Skip(offset)
                 .Take(limit)
                 .ToListAsync();
@@ -52,7 +53,6 @@ namespace TerraLimit.Api.Services
             var aqs = await _dbContext.AirQualityIndexes
                 .AsNoTracking()
                 .OrderBy(l => l.RecordId)
-                .Select(o => o)
                 .Skip(offset)
                 .Take(limit)
                 .ToListAsync();
@@ -70,7 +70,6 @@ namespace TerraLimit.Api.Services
             var ams = await _dbContext.AtmosphereMetrics
                 .AsNoTracking()
                 .OrderBy(l => l.RecordId)
-                .Select(o => o)
                 .Skip(offset)
                 .Take(limit)
                 .ToListAsync();

@@ -5,6 +5,19 @@ namespace TerraLimit.Api.Extensions
 {
     public static class WeatherExtensions
     {
+        public static WeatherLocationDTO ToDTO(this WeatherLocation wl)
+        {
+            return new WeatherLocationDTO
+            {
+                LocationId = wl.LocationId,
+                City = wl.City,
+                Country = wl.Country,
+                Latitude = wl.Latitude,
+                Longitude = wl.Longitude,
+                Region = wl.Region
+            };
+        }
+
         public static WeatherObservationDTO ToDTO(this WeatherObservation wo)
         {
             return new WeatherObservationDTO
