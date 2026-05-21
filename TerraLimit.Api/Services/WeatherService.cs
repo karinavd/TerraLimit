@@ -31,13 +31,15 @@ namespace TerraLimit.Api.Services
 
         public async Task<List<WeatherObservationDTO>> GetAllWeatherObservationsAsync(int offset, int limit)
         {
-            return await _dbContext.WeatherObservations
+            var observations = await _dbContext.WeatherObservations
                 .AsNoTracking()
                 .OrderBy(l => l.LocationId)
-                .Select(o => o.ToDTO())
+                .Select(o => o)
                 .Skip(offset)
                 .Take(limit)
                 .ToListAsync();
+
+            return [.. observations.Select(o => o.ToDTO())];
         }
 
         public async Task<WeatherObservationDTO?> GetWeatherObservationAsync(int id)
