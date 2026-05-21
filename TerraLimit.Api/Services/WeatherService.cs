@@ -26,9 +26,9 @@ namespace TerraLimit.Api.Services
             return [.. wls.Select(wl => wl.ToDTO())];
         }
 
-        public async Task<WeatherLocation?> GetWeatherLocationAsync(int id)
+        public async Task<WeatherLocationDTO?> GetWeatherLocationAsync(int id)
         {
-            return await _dbContext.WeatherLocations.FindAsync(id);
+            return (await _dbContext.WeatherLocations.FindAsync(id))?.ToDTO();
         }
 
         public async Task<List<WeatherObservationDTO>> GetAllWeatherObservationsAsync(int offset, int limit)
