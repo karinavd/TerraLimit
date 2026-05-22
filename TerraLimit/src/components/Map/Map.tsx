@@ -1,15 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Map,
   MapClusterLayer,
   MapPopup,
   MapControls,
+  type MapRef,
 } from '@/components/ui/map';
 import { getAllLocations } from './getAllLocations';
 import type { MarkerType } from '@/types/MarkerType';
 import type { GeoFeatureCollection } from '@/types/GeoFeatureDataType';
+import type { MapComponentProps } from '@/types/MapComponentPropsType';
 
-export default function MapComponent() {
+export default function MapComponent({ searchedLocation }: MapComponentProps) {
   const [locations, setLocationsData] = useState<GeoFeatureCollection | null>(
     null
   );
@@ -17,6 +19,8 @@ export default function MapComponent() {
     coordinates: [number, number];
     properties: MarkerType;
   } | null>(null);
+  const mapRef = useRef<MapRef>(null);
+
   useEffect(() => {
     const fetchLocations = async () => {
       const data = await getAllLocations();
@@ -36,9 +40,22 @@ export default function MapComponent() {
 
     fetchLocations();
   }, []);
+  useEffect(() => {
+    if (searchedLocation && mapRef.current) {
+      mapRef.current.flyTo({
+        center: [searchedLocation!.longitude, searchedLocation!.latitude],
+        zoom: 10,
+        duration: 1000,
+      });
+      setSelectedPoint({
+        coordinates: [searchedLocation!.longitude, searchedLocation!.latitude],
+        properties: searchedLocation!,
+      });
+    }
+  }, [searchedLocation]);
   return (
     <div className="h-full w-full">
-      <Map center={[-103.59, 40.66]} zoom={3.4} fadeDuration={0}>
+      <Map ref={mapRef} center={[-103.59, 40.66]} zoom={8} fadeDuration={0}>
         {locations && (
           <MapClusterLayer<MarkerType>
             data={locations}
