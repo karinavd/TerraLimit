@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
-    // .AddUserSecrets(Assembly.GetExecutingAssembly())
+    .AddUserSecrets(Assembly.GetExecutingAssembly())
     .Build();
 
 var builder = new ServiceCollection();
