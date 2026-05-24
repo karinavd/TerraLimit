@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using CsvHelper.Configuration.Attributes;
 
 namespace DbUpdater.Models
@@ -16,6 +17,7 @@ namespace DbUpdater.Models
         public string? Description { get; set; }
 
         [Ignore]
+        [ForeignKey("ParameterCode")]
         public ICollection<WaterRecord> Measurements { get; set; } = new List<WaterRecord>();
     }
 }

@@ -7,26 +7,26 @@ namespace DbUpdater.Models
     {
         public int Id { get; set; } // Primary Key for the database
 
-        public Location Location { get; set; }
-        public Current Current { get; set; }
+        public Location? Location { get; set; }
+        public Current? Current { get; set; }
     }
 
     [Owned]
     public class Location
     {
-        public string Name { get; set; }
-        public string Region { get; set; }
-        public string Country { get; set; }
+        public string? Name { get; set; }
+        public string? Region { get; set; }
+        public string? Country { get; set; }
         public double Lat { get; set; }
         public double Lon { get; set; }
 
         [JsonPropertyName("tz_id")]
-        public string TzId { get; set; }
+        public string? TzId { get; set; }
 
         [JsonPropertyName("localtime_epoch")]
         public long LocaltimeEpoch { get; set; }
 
-        public string Localtime { get; set; }
+        public string? Localtime { get; set; }
     }
 
     [Owned]
@@ -36,7 +36,7 @@ namespace DbUpdater.Models
         public long LastUpdatedEpoch { get; set; }
 
         [JsonPropertyName("last_updated")]
-        public string LastUpdated { get; set; }
+        public string? LastUpdated { get; set; }
 
         [JsonPropertyName("temp_c")]
         public double TempC { get; set; }
@@ -47,7 +47,7 @@ namespace DbUpdater.Models
         [JsonPropertyName("is_day")]
         public int IsDay { get; set; }
 
-        public Condition Condition { get; set; }
+        public Condition? Condition { get; set; }
 
         [JsonPropertyName("wind_mph")]
         public double WindMph { get; set; }
@@ -59,7 +59,7 @@ namespace DbUpdater.Models
         public int WindDegree { get; set; }
 
         [JsonPropertyName("wind_dir")]
-        public string WindDir { get; set; }
+        public string? WindDir { get; set; }
 
         [JsonPropertyName("pressure_mb")]
         public double PressureMb { get; set; }
@@ -86,14 +86,14 @@ namespace DbUpdater.Models
         public double Uv { get; set; }
 
         [JsonPropertyName("air_quality")]
-        public AirQuality AirQuality { get; set; }
+        public AirQuality? AirQuality { get; set; }
     }
 
     [Owned]
     public class Condition
     {
-        public string Text { get; set; }
-        public string Icon { get; set; }
+        public string? Text { get; set; }
+        public string? Icon { get; set; }
         public int Code { get; set; }
     }
 

@@ -13,7 +13,7 @@ namespace DbUpdater.Models
         public int Id { get; set; }
 
         [Name("GEMS Station Number")]
-        public string StationId { get; set; }
+        public string? StationId { get; set; }
 
         [Name("Sample Date")]
         public DateTime SampleDate
@@ -26,16 +26,16 @@ namespace DbUpdater.Models
         public double Depth { get; set; }
 
         [Name("Parameter Code")]
-        public string ParameterCode { get; set; }
+        public string? ParameterCode { get; set; }
 
         [Name("Value")]
         public double? Value { get; set; }
 
         [Name("Unit")]
-        public string Unit { get; set; }
+        public string? Unit { get; set; }
 
         [Ignore]
         [ForeignKey("StationId")]
-        public WaterStation Station { get; set; }
+        public WaterStation? Station { get; set; }
     }
 }
