@@ -22,6 +22,115 @@ namespace DbUpdater.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("DbUpdater.Models.AirQualityIndex", b =>
+                {
+                    b.Property<int>("RecordId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("Co")
+                        .HasColumnType("numeric")
+                        .HasColumnName("CO");
+
+                    b.Property<int?>("GbDefraIndex")
+                        .HasColumnType("integer")
+                        .HasColumnName("GB_DEFRA_Index");
+
+                    b.Property<decimal?>("No2")
+                        .HasColumnType("numeric")
+                        .HasColumnName("NO2");
+
+                    b.Property<decimal?>("O3")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("Pm10")
+                        .HasColumnType("numeric")
+                        .HasColumnName("PM10");
+
+                    b.Property<decimal?>("Pm25")
+                        .HasColumnType("numeric")
+                        .HasColumnName("PM25");
+
+                    b.Property<decimal?>("So2")
+                        .HasColumnType("numeric")
+                        .HasColumnName("SO2");
+
+                    b.Property<int?>("UsEpaIndex")
+                        .HasColumnType("integer")
+                        .HasColumnName("US_EPA_Index");
+
+                    b.HasKey("RecordId")
+                        .HasName("AirQuality_Indexes_pkey");
+
+                    b.ToTable("AirQuality_Indexes", (string)null);
+                });
+
+            modelBuilder.Entity("DbUpdater.Models.AtmosphereMetric", b =>
+                {
+                    b.Property<int>("RecordId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("CloudCoverPct")
+                        .HasColumnType("integer")
+                        .HasColumnName("Cloud_Cover_pct");
+
+                    b.Property<decimal?>("FeelsLikeC")
+                        .HasColumnType("numeric")
+                        .HasColumnName("FeelsLike_C");
+
+                    b.Property<int?>("HumidityPct")
+                        .HasColumnType("integer")
+                        .HasColumnName("Humidity_pct");
+
+                    b.Property<decimal?>("PrecipitationMm")
+                        .HasColumnType("numeric")
+                        .HasColumnName("Precipitation_mm");
+
+                    b.Property<decimal?>("PressureMb")
+                        .HasColumnType("numeric")
+                        .HasColumnName("Pressure_mb");
+
+                    b.Property<decimal?>("TemperatureC")
+                        .HasColumnType("numeric")
+                        .HasColumnName("Temperature_C");
+
+                    b.Property<decimal?>("UvIndex")
+                        .HasColumnType("numeric")
+                        .HasColumnName("Uv_Index");
+
+                    b.Property<int?>("WindDegree")
+                        .HasColumnType("integer")
+                        .HasColumnName("Wind_Degree");
+
+                    b.Property<string>("WindDirection")
+                        .HasColumnType("text")
+                        .HasColumnName("Wind_Direction");
+
+                    b.Property<decimal?>("WindSpeedKph")
+                        .HasColumnType("numeric")
+                        .HasColumnName("Wind_Speed_kph");
+
+                    b.HasKey("RecordId")
+                        .HasName("Atmosphere_Metrics_pkey");
+
+                    b.ToTable("Atmosphere_Metrics", (string)null);
+                });
+
+            modelBuilder.Entity("DbUpdater.Models.WaterParameter", b =>
+                {
+                    b.Property<string>("Code")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.HasKey("Code");
+
+                    b.ToTable("WaterParameters");
+                });
+
             modelBuilder.Entity("DbUpdater.Models.WaterRecord", b =>
                 {
                     b.Property<int>("Id")
@@ -34,25 +143,33 @@ namespace DbUpdater.Migrations
                         .HasColumnType("double precision");
 
                     b.Property<string>("ParameterCode")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("SampleDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("StationId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Unit")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<double?>("Value")
                         .HasColumnType("double precision");
 
+                    b.Property<string>("WaterParameterCode")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("StationId");
 
-                    b.ToTable("WaterRecords", (string)null);
+                    b.HasIndex("WaterParameterCode");
+
+                    b.ToTable("WaterRecords");
                 });
 
             modelBuilder.Entity("DbUpdater.Models.WaterStation", b =>
@@ -61,20 +178,87 @@ namespace DbUpdater.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("CountryName")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("StationIdentifier")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("WaterBodyName")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("WaterType")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.ToTable("WaterStations", (string)null);
+                    b.ToTable("WaterStations");
+                });
+
+            modelBuilder.Entity("DbUpdater.Models.WeatherLocation", b =>
+                {
+                    b.Property<int>("LocationId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("City")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Country")
+                        .HasColumnType("text");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Region")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Timezone")
+                        .HasColumnType("text");
+
+                    b.HasKey("LocationId")
+                        .HasName("Weather_Locations_pkey");
+
+                    b.ToTable("Weather_Locations", (string)null);
+                });
+
+            modelBuilder.Entity("DbUpdater.Models.WeatherObservation", b =>
+                {
+                    b.Property<int>("RecordId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ConditionCode")
+                        .HasColumnType("integer")
+                        .HasColumnName("Condition_Code");
+
+                    b.Property<string>("ConditionText")
+                        .HasColumnType("text")
+                        .HasColumnName("Condition_Text");
+
+                    b.Property<string>("CurrentConditionIcon")
+                        .HasColumnType("text")
+                        .HasColumnName("Current_Condition_Icon");
+
+                    b.Property<DateTime?>("LastUpdated")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("Localtime")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int?>("LocationId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("RecordId")
+                        .HasName("Weather_Observations_pkey");
+
+                    b.HasIndex("LocationId");
+
+                    b.ToTable("Weather_Observations", (string)null);
                 });
 
             modelBuilder.Entity("DbUpdater.Models.WeatherRecord", b =>
@@ -87,16 +271,57 @@ namespace DbUpdater.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("WeatherRecords", (string)null);
+                    b.ToTable("WeatherRecords");
+                });
+
+            modelBuilder.Entity("DbUpdater.Models.AirQualityIndex", b =>
+                {
+                    b.HasOne("DbUpdater.Models.WeatherObservation", "Record")
+                        .WithOne("AirQualityIndex")
+                        .HasForeignKey("DbUpdater.Models.AirQualityIndex", "RecordId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_aq_obs");
+
+                    b.Navigation("Record");
+                });
+
+            modelBuilder.Entity("DbUpdater.Models.AtmosphereMetric", b =>
+                {
+                    b.HasOne("DbUpdater.Models.WeatherObservation", "Record")
+                        .WithOne("AtmosphereMetric")
+                        .HasForeignKey("DbUpdater.Models.AtmosphereMetric", "RecordId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_metrics_obs");
+
+                    b.Navigation("Record");
                 });
 
             modelBuilder.Entity("DbUpdater.Models.WaterRecord", b =>
                 {
                     b.HasOne("DbUpdater.Models.WaterStation", "Station")
                         .WithMany("Measurements")
-                        .HasForeignKey("StationId");
+                        .HasForeignKey("StationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DbUpdater.Models.WaterParameter", null)
+                        .WithMany("Measurements")
+                        .HasForeignKey("WaterParameterCode");
 
                     b.Navigation("Station");
+                });
+
+            modelBuilder.Entity("DbUpdater.Models.WeatherObservation", b =>
+                {
+                    b.HasOne("DbUpdater.Models.WeatherLocation", "Location")
+                        .WithMany("WeatherObservations")
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_obs_location");
+
+                    b.Navigation("Location");
                 });
 
             modelBuilder.Entity("DbUpdater.Models.WeatherRecord", b =>
@@ -125,6 +350,7 @@ namespace DbUpdater.Migrations
                                 .HasJsonPropertyName("is_day");
 
                             b1.Property<string>("LastUpdated")
+                                .IsRequired()
                                 .HasColumnType("text")
                                 .HasJsonPropertyName("last_updated");
 
@@ -165,6 +391,7 @@ namespace DbUpdater.Migrations
                                 .HasJsonPropertyName("wind_degree");
 
                             b1.Property<string>("WindDir")
+                                .IsRequired()
                                 .HasColumnType("text")
                                 .HasJsonPropertyName("wind_dir");
 
@@ -178,7 +405,7 @@ namespace DbUpdater.Migrations
 
                             b1.HasKey("WeatherRecordId");
 
-                            b1.ToTable("WeatherRecords", (string)null);
+                            b1.ToTable("WeatherRecords");
 
                             b1.WithOwner()
                                 .HasForeignKey("WeatherRecordId");
@@ -217,7 +444,7 @@ namespace DbUpdater.Migrations
 
                                     b2.HasKey("CurrentWeatherRecordId");
 
-                                    b2.ToTable("WeatherRecords", (string)null);
+                                    b2.ToTable("WeatherRecords");
 
                                     b2.HasJsonPropertyName("air_quality");
 
@@ -234,22 +461,26 @@ namespace DbUpdater.Migrations
                                         .HasColumnType("integer");
 
                                     b2.Property<string>("Icon")
+                                        .IsRequired()
                                         .HasColumnType("text");
 
                                     b2.Property<string>("Text")
+                                        .IsRequired()
                                         .HasColumnType("text");
 
                                     b2.HasKey("CurrentWeatherRecordId");
 
-                                    b2.ToTable("WeatherRecords", (string)null);
+                                    b2.ToTable("WeatherRecords");
 
                                     b2.WithOwner()
                                         .HasForeignKey("CurrentWeatherRecordId");
                                 });
 
-                            b1.Navigation("AirQuality");
+                            b1.Navigation("AirQuality")
+                                .IsRequired();
 
-                            b1.Navigation("Condition");
+                            b1.Navigation("Condition")
+                                .IsRequired();
                         });
 
                     b.OwnsOne("DbUpdater.Models.Location", "Location", b1 =>
@@ -258,12 +489,14 @@ namespace DbUpdater.Migrations
                                 .HasColumnType("integer");
 
                             b1.Property<string>("Country")
+                                .IsRequired()
                                 .HasColumnType("text");
 
                             b1.Property<double>("Lat")
                                 .HasColumnType("double precision");
 
                             b1.Property<string>("Localtime")
+                                .IsRequired()
                                 .HasColumnType("text");
 
                             b1.Property<long>("LocaltimeEpoch")
@@ -274,31 +507,53 @@ namespace DbUpdater.Migrations
                                 .HasColumnType("double precision");
 
                             b1.Property<string>("Name")
+                                .IsRequired()
                                 .HasColumnType("text");
 
                             b1.Property<string>("Region")
+                                .IsRequired()
                                 .HasColumnType("text");
 
                             b1.Property<string>("TzId")
+                                .IsRequired()
                                 .HasColumnType("text")
                                 .HasJsonPropertyName("tz_id");
 
                             b1.HasKey("WeatherRecordId");
 
-                            b1.ToTable("WeatherRecords", (string)null);
+                            b1.ToTable("WeatherRecords");
 
                             b1.WithOwner()
                                 .HasForeignKey("WeatherRecordId");
                         });
 
-                    b.Navigation("Current");
+                    b.Navigation("Current")
+                        .IsRequired();
 
-                    b.Navigation("Location");
+                    b.Navigation("Location")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DbUpdater.Models.WaterParameter", b =>
+                {
+                    b.Navigation("Measurements");
                 });
 
             modelBuilder.Entity("DbUpdater.Models.WaterStation", b =>
                 {
                     b.Navigation("Measurements");
+                });
+
+            modelBuilder.Entity("DbUpdater.Models.WeatherLocation", b =>
+                {
+                    b.Navigation("WeatherObservations");
+                });
+
+            modelBuilder.Entity("DbUpdater.Models.WeatherObservation", b =>
+                {
+                    b.Navigation("AirQualityIndex");
+
+                    b.Navigation("AtmosphereMetric");
                 });
 #pragma warning restore 612, 618
         }

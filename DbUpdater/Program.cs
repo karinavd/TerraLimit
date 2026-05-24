@@ -24,6 +24,12 @@ builder.AddHttpClient();
 
 var app = builder.BuildServiceProvider();
 
+using (var migrationScope = app.CreateScope())
+{
+    var dbContext = migrationScope.ServiceProvider.GetRequiredService<EcoDb>();
+    await dbContext.Database.MigrateAsync();
+}
+
 using var scope = app.CreateScope();
 var fetcher = scope.ServiceProvider.GetRequiredService<Fetcher>();
 var waterFetcher = scope.ServiceProvider.GetRequiredService<WaterFetcher>();
