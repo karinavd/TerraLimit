@@ -28,11 +28,11 @@ public partial class EcoState : DbContext
     {
         modelBuilder.Entity<AirQualityIndex>(entity =>
         {
-            entity.HasKey(e => e.RecordId).HasName("AirQuality_Indexes_pkey");
+            entity.HasKey(e => e.Id).HasName("AirQuality_Indexes_pkey");
 
             entity.ToTable("AirQuality_Indexes");
 
-            entity.Property(e => e.RecordId).ValueGeneratedNever();
+            entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.Co).HasColumnName("CO");
             entity.Property(e => e.GbDefraIndex).HasColumnName("GB_DEFRA_Index");
             entity.Property(e => e.No2).HasColumnName("NO2");
@@ -42,17 +42,17 @@ public partial class EcoState : DbContext
             entity.Property(e => e.UsEpaIndex).HasColumnName("US_EPA_Index");
 
             entity.HasOne(d => d.Record).WithOne(p => p.AirQualityIndex)
-                .HasForeignKey<AirQualityIndex>(d => d.RecordId)
+                .HasForeignKey<AirQualityIndex>(d => d.Id)
                 .HasConstraintName("fk_aq_obs");
         });
 
         modelBuilder.Entity<AtmosphereMetric>(entity =>
         {
-            entity.HasKey(e => e.RecordId).HasName("Atmosphere_Metrics_pkey");
+            entity.HasKey(e => e.Id).HasName("Atmosphere_Metrics_pkey");
 
             entity.ToTable("Atmosphere_Metrics");
 
-            entity.Property(e => e.RecordId).ValueGeneratedNever();
+            entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.CloudCoverPct).HasColumnName("Cloud_Cover_pct");
             entity.Property(e => e.FeelsLikeC).HasColumnName("FeelsLike_C");
             entity.Property(e => e.HumidityPct).HasColumnName("Humidity_pct");
@@ -65,26 +65,26 @@ public partial class EcoState : DbContext
             entity.Property(e => e.WindSpeedKph).HasColumnName("Wind_Speed_kph");
 
             entity.HasOne(d => d.Record).WithOne(p => p.AtmosphereMetric)
-                .HasForeignKey<AtmosphereMetric>(d => d.RecordId)
+                .HasForeignKey<AtmosphereMetric>(d => d.Id)
                 .HasConstraintName("fk_metrics_obs");
         });
 
         modelBuilder.Entity<WeatherLocation>(entity =>
         {
-            entity.HasKey(e => e.LocationId).HasName("Weather_Locations_pkey");
+            entity.HasKey(e => e.Id).HasName("Weather_Locations_pkey");
 
             entity.ToTable("Weather_Locations");
 
-            entity.Property(e => e.LocationId).ValueGeneratedNever();
+            entity.Property(e => e.Id).ValueGeneratedNever();
         });
 
         modelBuilder.Entity<WeatherObservation>(entity =>
         {
-            entity.HasKey(e => e.RecordId).HasName("Weather_Observations_pkey");
+            entity.HasKey(e => e.Id).HasName("Weather_Observations_pkey");
 
             entity.ToTable("Weather_Observations");
 
-            entity.Property(e => e.RecordId).ValueGeneratedNever();
+            entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.ConditionCode).HasColumnName("Condition_Code");
             entity.Property(e => e.ConditionText).HasColumnName("Condition_Text");
             entity.Property(e => e.CurrentConditionIcon).HasColumnName("Current_Condition_Icon");

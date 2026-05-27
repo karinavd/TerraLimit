@@ -2,7 +2,7 @@ namespace TerraLimit.Api.DTOs
 {
     public class AirQualityIndexDTO
     {
-        public int RecordId { get; set; }
+        public int Id { get; set; }
 
         public decimal? Co { get; set; }
 
