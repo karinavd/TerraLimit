@@ -11,34 +11,50 @@ namespace TerraLimit.Api.Endpoints
         {
             var group = builder.MapGroup("weather");
 
-            group.MapGet("/locations/{id}", GetOneRecordAsync<WeatherLocation, WeatherLocationDTO>);
-            group.MapGet("/locations", GetPageAsync<WeatherLocation, WeatherLocationDTO>);
+            group.MapGet("/locations/{id}", GetOneRecordAsync<WeatherLocation, WeatherLocationDTO, int>);
+            group.MapGet("/locations", GetPageAsync<WeatherLocation, WeatherLocationDTO, int>);
 
-            group.MapGet("/observations/{id}", GetOneRecordAsync<WeatherObservation, WeatherObservationDTO>);
-            group.MapGet("/observations", GetPageAsync<WeatherObservation, WeatherObservationDTO>);
+            group.MapGet("/observations/{id}", GetOneRecordAsync<WeatherObservation, WeatherObservationDTO, int>);
+            group.MapGet("/observations", GetPageAsync<WeatherObservation, WeatherObservationDTO, int>);
 
-            group.MapGet("/air_qualities/{id}", GetOneRecordAsync<AirQualityIndex, AirQualityIndexDTO>);
-            group.MapGet("/air_qualities", GetPageAsync<AirQualityIndex, AirQualityIndexDTO>);
+            group.MapGet("/air_qualities/{id}", GetOneRecordAsync<AirQualityIndex, AirQualityIndexDTO, int>);
+            group.MapGet("/air_qualities", GetPageAsync<AirQualityIndex, AirQualityIndexDTO, int>);
 
-            group.MapGet("/atmosphere_metrics/{id}", GetOneRecordAsync<AtmosphereMetric, AtmosphereMetricDTO>);
-            group.MapGet("/atmosphere_metrics", GetPageAsync<AtmosphereMetric, AtmosphereMetricDTO>);
+            group.MapGet("/atmosphere_metrics/{id}", GetOneRecordAsync<AtmosphereMetric, AtmosphereMetricDTO, int>);
+            group.MapGet("/atmosphere_metrics", GetPageAsync<AtmosphereMetric, AtmosphereMetricDTO, int>);
 
             return group;
         }
 
-        private static async Task<IResult> GetOneRecordAsync<TEntity, TDto>(EndpointService weatherService, int id)
-                                                             where TEntity : class, IEntity<int>
+        public static IEndpointRouteBuilder MapWaterEndpoints(this IEndpointRouteBuilder builder)
+        {
+            var group = builder.MapGroup("water");
+
+            group.MapGet("/records/{id}", GetOneRecordAsync<WaterRecord, WaterRecordDTO, int>);
+            group.MapGet("/records", GetPageAsync<WaterRecord, WaterRecordDTO, int>);
+
+            group.MapGet("/parameters/{id}", GetOneRecordAsync<WaterParameter, WaterParameterDTO, string>);
+            group.MapGet("/parameters", GetPageAsync<WaterParameter, WaterParameterDTO, string>);
+
+            group.MapGet("/stations/{id}", GetOneRecordAsync<WaterStation, WaterStationDTO, string>);
+            group.MapGet("/stations", GetPageAsync<WaterStation, WaterStationDTO, string>);
+
+            return group;
+        }
+
+        private static async Task<IResult> GetOneRecordAsync<TEntity, TDto, TKey>(EndpointService weatherService, TKey id)
+                                                             where TEntity : class, IEntity<TKey>
                                                              where TDto : new()
         {
-            var record = await weatherService.GetOneRecordAsync<TEntity, TDto>(id);
+            var record = await weatherService.GetOneRecordAsync<TEntity, TDto, TKey>(id);
             return record is null ? TypedResults.NotFound("Record not found") : TypedResults.Ok(record);
         }
 
-        private static async Task<IResult> GetPageAsync<TEntity, TDto>(EndpointService weatherService, int offset = 0, int limit = 100)
-                                                        where TEntity : class, IEntity<int>
+        private static async Task<IResult> GetPageAsync<TEntity, TDto, TKey>(EndpointService weatherService, int offset = 0, int limit = 100)
+                                                        where TEntity : class, IEntity<TKey>
                                                         where TDto : new()
         {
-            var pageItems = await weatherService.GetPageAsync<TEntity, TDto>(offset, limit);
+            var pageItems = await weatherService.GetPageAsync<TEntity, TDto, TKey>(offset, limit);
             return pageItems?.Count == 0 ? TypedResults.NotFound("Page is empty") : TypedResults.Ok(pageItems);
         }
     }

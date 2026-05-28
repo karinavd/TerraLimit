@@ -18,7 +18,7 @@ namespace TerraLimit.Api.Services
         }
 
 
-        public async Task<List<TDto>> GetPageAsync<TEntity, TDto>(int offset, int limit) where TEntity : class, IEntity<int>
+        public async Task<List<TDto>> GetPageAsync<TEntity, TDto, TKey>(int offset, int limit) where TEntity : class, IEntity<TKey>
                                                                                          where TDto : new()
         {
             var entities = await _dbContext.Set<TEntity>()
@@ -31,7 +31,7 @@ namespace TerraLimit.Api.Services
             return [.. entities.Select(MyMapper.MapTo<TDto>)];
         }
 
-        public async Task<TDto?> GetOneRecordAsync<TEntity, TDto>(int id) where TEntity : class, IEntity<int>
+        public async Task<TDto?> GetOneRecordAsync<TEntity, TDto, TKey>(TKey id) where TEntity : class, IEntity<TKey>
                                                                           where TDto : new()
         {
             var record = await _dbContext.Set<TEntity>().FindAsync(id);

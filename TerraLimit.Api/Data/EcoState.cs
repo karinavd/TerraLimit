@@ -20,6 +20,12 @@ public partial class EcoState : DbContext
 
     public virtual DbSet<AtmosphereMetric> AtmosphereMetrics { get; set; }
 
+    public virtual DbSet<WaterParameter> WaterParameters { get; set; }
+
+    public virtual DbSet<WaterRecord> WaterRecords { get; set; }
+
+    public virtual DbSet<WaterStation> WaterStations { get; set; }
+
     public virtual DbSet<WeatherLocation> WeatherLocations { get; set; }
 
     public virtual DbSet<WeatherObservation> WeatherObservations { get; set; }
@@ -69,6 +75,22 @@ public partial class EcoState : DbContext
                 .HasConstraintName("fk_metrics_obs");
         });
 
+        modelBuilder.Entity<WaterParameter>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<WaterRecord>(entity =>
+        {
+            entity.HasIndex(e => e.ParameterCode, "IX_WaterRecords_ParameterCode");
+
+            entity.HasIndex(e => e.StationId, "IX_WaterRecords_StationId");
+
+            entity.HasOne(d => d.ParameterCodeNavigation).WithMany(p => p.WaterRecords).HasForeignKey(d => d.ParameterCode);
+
+            entity.HasOne(d => d.Station).WithMany(p => p.WaterRecords).HasForeignKey(d => d.StationId);
+        });
+
         modelBuilder.Entity<WeatherLocation>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("Weather_Locations_pkey");
@@ -83,6 +105,8 @@ public partial class EcoState : DbContext
             entity.HasKey(e => e.Id).HasName("Weather_Observations_pkey");
 
             entity.ToTable("Weather_Observations");
+
+            entity.HasIndex(e => e.LocationId, "IX_Weather_Observations_LocationId");
 
             entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.ConditionCode).HasColumnName("Condition_Code");
