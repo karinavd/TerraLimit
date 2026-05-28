@@ -44,5 +44,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapWeatherEndpoints();
+app.MapWaterEndpoints();
 
 app.Run();
