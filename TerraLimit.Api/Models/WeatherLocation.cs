@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using TerraLimit.Api.Interfaces;
 
 namespace TerraLimit.Api.Models;
 
-public partial class WeatherLocation
+public partial class WeatherLocation : IEntity<int>
 {
-    public int LocationId { get; set; }
+    [Column("LocationId")]
+    public int Id { get; set; }
 
     public string? City { get; set; }
 
