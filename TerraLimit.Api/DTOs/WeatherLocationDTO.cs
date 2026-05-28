@@ -2,7 +2,7 @@ namespace TerraLimit.Api.DTOs
 {
     public class WeatherLocationDTO
     {
-        public int LocationId { get; set; }
+        public int Id { get; set; }
 
         public string? City { get; set; }
 

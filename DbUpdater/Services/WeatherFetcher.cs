@@ -22,11 +22,7 @@ namespace DbUpdater.Services
 
         public async Task UpdateWeatherDataAsync()
         {
-            var cityNames = await File.ReadAllLinesAsync(Path.Combine(Directory.GetCurrentDirectory(), "CSVData", "worldcities.txt"));
-            var validCitiesName = cityNames
-                .Select(x => x.Trim().Replace("’", "'").Replace("‘", "'"))
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .ToArray();
+            var cityCoordinates = await File.ReadAllLinesAsync(Path.Combine(Directory.GetCurrentDirectory(), "CSVData", "worldcities.txt"));
 
             Dictionary<string, string> requiredWeatherData;
             using (var scope = _serviceProvider.CreateScope())
@@ -34,26 +30,34 @@ namespace DbUpdater.Services
                 var dbContext = scope.ServiceProvider.GetRequiredService<EcoDb>();
 
                 var rawDbData = await dbContext.WeatherRecords
-                    .Select(r => new { r.Location.Name, r.Current.LastUpdated })
+                    .Select(r => new { r.Location!.Name, r.Current!.LastUpdated })
                     .ToListAsync();
 
                 requiredWeatherData = rawDbData
                     .DistinctBy(x => x.Name)
-                    .ToDictionary(x => x.Name, x => x.LastUpdated);
+                    .ToDictionary(x => x.Name!, x => x.LastUpdated)!;
             }
 
-            await Parallel.ForEachAsync(validCitiesName, new ParallelOptions { MaxDegreeOfParallelism = 50 }, async (city, token) =>
+            await Parallel.ForEachAsync(cityCoordinates, new ParallelOptions { MaxDegreeOfParallelism = 20 }, async (cityCoordinates, token) =>
             {
                 try
                 {
-                    var fetchedRecord = await _httpClient.GetFromJsonAsync<WeatherRecord>
-                        ($"https://api.weatherapi.com/v1/current.json?key={_apiKey}&q={city}&aqi=yes", token);
+                    var response = await _httpClient
+                                         .GetAsync($"https://api.weatherapi.com/v1/current.json?key={_apiKey}&q={cityCoordinates}&aqi=yes", token);
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        Console.WriteLine($"Skipped: {cityCoordinates} (Code: {response.StatusCode})");
+                        return;
+                    }
+
+                    var fetchedRecord = await response.Content.ReadFromJsonAsync<WeatherRecord>(token);
 
                     if (fetchedRecord == null || fetchedRecord.Location == null) return;
 
-                    if (requiredWeatherData.TryGetValue(fetchedRecord.Location.Name, out var savedLastUpdated))
+                    if (requiredWeatherData.TryGetValue(fetchedRecord.Location.Name!, out var savedLastUpdated))
                     {
-                        if (savedLastUpdated == fetchedRecord.Current.LastUpdated) return;
+                        if (savedLastUpdated == fetchedRecord.Current!.LastUpdated) return;
                     }
 
                     using var scope = _serviceProvider.CreateScope();
@@ -61,7 +65,10 @@ namespace DbUpdater.Services
 
                     await UpdateConcreteWeatherAsync(fetchedRecord, dbContext);
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error for {cityCoordinates}: {ex.Message}");
+                }
             });
         }
 

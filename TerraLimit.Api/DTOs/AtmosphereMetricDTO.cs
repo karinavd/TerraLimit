@@ -6,7 +6,7 @@ namespace TerraLimit.Api.DTOs;
 
 public class AtmosphereMetricDTO
 {
-    public int RecordId { get; set; }
+    public int Id { get; set; }
 
     public decimal? TemperatureC { get; set; }
 

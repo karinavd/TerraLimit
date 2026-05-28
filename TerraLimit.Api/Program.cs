@@ -20,7 +20,7 @@ var configuration = new ConfigurationBuilder()
 builder.Services.AddSingleton<IConfiguration>(configuration);
 builder.Services.AddDbContext<EcoState>(options => options.UseNpgsql(configuration.GetConnectionString("Default")));
 
-builder.Services.AddScoped<WeatherService>();
+builder.Services.AddScoped<EndpointService>();
 
 builder.Services.AddCors(options =>
 {
@@ -31,8 +31,11 @@ builder.Services.AddCors(options =>
               .WithHeaders("Content-Type", "Authorization");
     });
 });
+
 var app = builder.Build();
+
 app.UseCors("FrontendPolicy");
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -41,5 +44,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapWeatherEndpoints();
+app.MapWaterEndpoints();
 
 app.Run();
