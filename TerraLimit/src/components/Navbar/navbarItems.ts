@@ -3,13 +3,49 @@ export const navbarItems = [
     title: 'Weather',
     href: '/weather',
     subItems: [
-      { title: 'Atmosphere metrics', href: '/weather/atmosphere-metrics' },
-      { title: 'Air quality', href: '/weather/air-quality' },
-      { title: 'Locations', href: '/weather/locations' },
-      { title: 'Observations', href: '/weather/observations' },
+      {
+        title: 'Locations',
+        categoryKey: 'weather/locations',
+        href: '/weather/locations',
+      },
+      {
+        title: 'Observations',
+        categoryKey: 'weather/observations',
+        href: '/weather/observations',
+      },
+      {
+        title: 'Air Quality',
+        categoryKey: 'weather/air_qualities',
+        href: '/weather/air-quality',
+      },
+      {
+        title: 'Atmosphere Metrics',
+        categoryKey: 'weather/atmosphere_metrics',
+        href: '/weather/atmosphere-metrics',
+      },
     ],
   },
-  { title: 'Water', href: '/water' },
-  { title: 'About', href: '/about' },
+  {
+    title: 'Water',
+    href: '/water',
+    subItems: [
+      {
+        title: 'Stations',
+        categoryKey: 'water/stations',
+        href: '/water/stations',
+      },
+      {
+        title: 'Records',
+        categoryKey: 'water/records',
+        href: '/water/records',
+      },
+      {
+        title: 'Parameters',
+        categoryKey: 'water/parameters',
+        href: '/water/parameters',
+      },
+    ],
+  },
+  { title: 'About Us', href: '/about' },
   { title: 'Dashboard', href: '/dashboard' },
 ];

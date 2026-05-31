@@ -5,33 +5,49 @@ import type { MarkerType } from './types/MarkerType';
 import { useState } from 'react';
 import Navbar from './components/Navbar/Navbar';
 import LayoutWithHeader from './LayoutWithHeader';
+import AboutUs from './components/AboutUs/AboutUs';
+import Sidebar from './components/Sidebar/Sidebar';
+import LocationProvider from './LocationContext/LocationProvider';
 function App() {
   const [searchedLocation, setSearchedLocation] = useState<MarkerType | null>(
     null
   );
   return (
-    <div className="h-screen w-screen">
-      <BrowserRouter>
-        <Routes>
-          <Route
-            element={
-              <LayoutWithHeader
-                onLocationSelect={(location: MarkerType) =>
-                  setSearchedLocation(location)
+    <LocationProvider>
+      <div className="h-screen w-screen overflow-hidden">
+        <BrowserRouter>
+          <Routes>
+            <Route
+              element={
+                <LayoutWithHeader
+                  onLocationSelect={(location: MarkerType) =>
+                    setSearchedLocation(location)
+                  }
+                />
+              }
+            >
+              <Route
+                path="/"
+                element={
+                  <div className="relative w-full h-full">
+                    <MapComponent
+                      searchedLocation={searchedLocation}
+                      onPointSelect={(location) =>
+                        setSearchedLocation(location)
+                      }
+                    />
+                    <Sidebar selectedPoint={searchedLocation} />
+                  </div>
                 }
               />
-            }
-          >
-            <Route
-              path="/"
-              element={<MapComponent searchedLocation={searchedLocation} />}
-            />
-          </Route>
+            </Route>
+            <Route path="/about" element={<AboutUs />} />
 
-          <Route path="/menu" element={<Navbar />} />
-        </Routes>
-      </BrowserRouter>
-    </div>
+            <Route path="/menu" element={<Navbar />} />
+          </Routes>
+        </BrowserRouter>
+      </div>
+    </LocationProvider>
   );
 }
 

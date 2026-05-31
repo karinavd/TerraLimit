@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom';
-import logo from '../../../public/Logo.png';
-import menu from '../../../public/Menu.png';
+import logo from '../../assets/Logo.png';
+import menu from '../../assets/menu.png';
 import SearchComponent from './SearchComponent';
-import type { MapComponentProps } from '@/types/HeaderPropsType';
-const Header = ({ onLocationSelect }: MapComponentProps) => {
+import type { LocationPickerMapProps } from '@/types/HeaderPropsType';
+const Header = ({ onLocationSelect }: LocationPickerMapProps) => {
   const navigate = useNavigate();
   const handleMenuClick = () => {
     navigate('/menu');

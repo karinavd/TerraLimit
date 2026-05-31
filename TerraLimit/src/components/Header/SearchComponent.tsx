@@ -1,22 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import searchIcon from '../../../public/search-interface-symbol.png';
-import { getAllLocations } from '../Map/getAllLocations';
+import searchIcon from '../../assets/search-interface-symbol.png';
 import type { MarkerType } from '@/types/MarkerType';
-import type { MapComponentProps } from '@/types/HeaderPropsType';
-const SearchComponent = ({ onLocationSelect }: MapComponentProps) => {
-  const [suggestions, setSuggestions] = useState<MarkerType[]>([]);
-  useEffect(() => {
-    const fetchSuggestions = async () => {
-      const res = await getAllLocations();
-      setSuggestions(res);
-    };
-    fetchSuggestions();
-  }, []);
-
+import type { LocationPickerMapProps } from '@/types/HeaderPropsType';
+import { useLocations } from '@/LocationContext/useLocations';
+const SearchComponent = ({ onLocationSelect }: LocationPickerMapProps) => {
+  const { locations } = useLocations();
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
-    const matchedLocation = suggestions.find((suggestion) => {
-      const fullName = `${suggestion.city}, ${suggestion.region}, ${suggestion.country}`;
+    const matchedLocation = locations.find((location: MarkerType) => {
+      const fullName = `${location.city}, ${location.region}, ${location.country}`;
       return fullName.toLowerCase() === value.toLowerCase();
     });
     if (matchedLocation && onLocationSelect) {
@@ -34,9 +25,9 @@ const SearchComponent = ({ onLocationSelect }: MapComponentProps) => {
         onChange={handleInputChange}
       />
       <datalist id="search-suggestions">
-        {suggestions.map((location, index) => (
+        {locations?.map((location: MarkerType) => (
           <option
-            key={index}
+            key={location.id}
             value={`${location.city}, ${location.region}, ${location.country}`}
           />
         ))}
