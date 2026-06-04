@@ -1,4 +1,4 @@
-import React, { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { getAllLocations } from '../components/Map/getAllLocations';
 import type { MarkerType } from '../types/MarkerType';
 import { LocationContext } from './LocationContext';
