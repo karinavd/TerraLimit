@@ -1,0 +1,264 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TerraLimit — Water Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{% static 'dashboard/style.css' %}" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="shell">
+
+  <div class="header">
+    <div class="logo">
+      <div>
+        <div class="logo-title">Terra<span>Limit</span></div>
+        <div class="logo-sub">Water Quality Dashboard</div>
+      </div>
+    </div>
+    <div class="live-badge">Live Monitoring</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Stations</div>
+      <div class="stat-value" id="s1">—</div>
+      <div class="stat-sub">monitoring stations</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Records</div>
+      <div class="stat-value" id="s2">—</div>
+      <div class="stat-sub">water quality entries</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Parameters</div>
+      <div class="stat-value" id="s3">—</div>
+      <div class="stat-sub">chemical indicators</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Pollution Index</div>
+      <div class="stat-value danger" id="s4">—</div>
+      <div class="stat-sub">average index 0–100</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">All Pollution Parameters By Depth</div>
+    </div>
+    <div class="card-body">
+      <div id="depthStatus" class="status">Loading data...</div>
+      <div class="chart-box tall"><canvas id="depthChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">Top 20 Most Polluted Stations</div>
+      <select id="waterTypeSel">
+        <option value="">All types</option>
+      </select>
+    </div>
+    <div class="tscroll">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Station ID</th>
+            <th>Country</th>
+            <th>Type</th>
+            <th>Records</th>
+            <th style="min-width:180px">Pollution Index</th>
+          </tr>
+        </thead>
+        <tbody id="top20Body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">Average Value by Parameter</div>
+    </div>
+    <div class="card-body">
+      <div class="chart-box"><canvas id="barChart"></canvas></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+Chart.defaults.color = '#8b949e';
+Chart.defaults.font.family = '"JetBrains Mono", monospace';
+Chart.defaults.font.size = 11;
+
+const scoreColor = v => v >= 70 ? '#f85149' : v >= 40 ? '#d29922' : '#3fb950';
+const fmtNum = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1000 ? (n/1000).toFixed(1)+'k' : n;
+
+function pillClass(type) {
+  const t = (type || '').toLowerCase();
+  if (t === 'river')       return 'pill pill-river';
+  if (t === 'lake')        return 'pill pill-lake';
+  if (t === 'groundwater') return 'pill pill-groundwater';
+  return 'pill pill-other';
+}
+
+let depthChartInst = null;
+
+(async () => {
+  try {
+    const res = await fetch('/api/analytics/');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const d = await res.json();
+    initDashboard(d);
+  } catch (e) {
+    const el = document.getElementById('depthStatus');
+    el.textContent = 'Error: ' + e.message;
+    el.classList.add('err');
+  }
+})();
+
+function initDashboard(d) {
+  const { top20, param_summary, depth_profile, water_types, stats } = d;
+
+  document.getElementById('s1').textContent = fmtNum(stats.total_stations);
+  document.getElementById('s2').textContent = fmtNum(stats.total_records);
+  document.getElementById('s3').textContent = stats.total_parameters;
+  document.getElementById('s4').textContent = stats.avg_pollution_index;
+
+  const sel = document.getElementById('waterTypeSel');
+  (water_types || []).forEach(wt => {
+    const o = document.createElement('option');
+    o.value = wt;
+    o.textContent = wt;
+    sel.appendChild(o);
+  });
+
+  sel.addEventListener('change', async () => {
+    const wt = sel.value;
+    try {
+      const r = await fetch(`/api/top20/?water_type=${encodeURIComponent(wt)}`);
+      const j = await r.json();
+      renderTop20(j.data);
+    } catch (err) {
+      console.error(err);
+    }
+  });
+
+  buildDepthChart(depth_profile);
+  document.getElementById('depthStatus').classList.add('hidden');
+
+  renderTop20(top20);
+
+  const top10 = param_summary.slice(0, 10);
+  new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+      labels: top10.map(p => p.code),
+      datasets: [{
+        label: 'Average Value',
+        data: top10.map(p => p.avg_value),
+        backgroundColor: top10.map((_, i) =>
+          `hsla(${[200, 160, 280, 40, 340, 100, 220, 60, 320, 180][i]},65%,55%,.75)`
+        ),
+        borderRadius: 5,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => ` ${c.parsed.y.toFixed(4)}` } }
+      },
+      scales: {
+        x: { grid: { color: 'transparent' }, ticks: { color: '#e6edf3' } },
+        y: { grid: { color: 'rgba(48,54,61,0.8)' }, ticks: { color: '#8b949e' } }
+      }
+    }
+  });
+}
+
+function renderTop20(top20) {
+  const tbody = document.getElementById('top20Body');
+  tbody.innerHTML = '';
+  top20.forEach((s, i) => {
+    const c = scoreColor(s.avg_pollution);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="mono" style="color:var(--muted)">${i + 1}</td>
+      <td class="mono accent">${s.station_id}</td>
+      <td>${s.country_name}</td>
+      <td><span class="${pillClass(s.water_type)}">${s.water_type || '—'}</span></td>
+      <td class="mono">${fmtNum(s.record_count)}</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar">
+            <div class="bar-fill" style="width:${s.avg_pollution}%;background:${c}"></div>
+          </div>
+          <span class="bar-num" style="color:${c}">${s.avg_pollution}</span>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function buildDepthChart(data) {
+  if (depthChartInst) depthChartInst.destroy();
+
+  if (!data || data.length === 0) {
+    document.getElementById('depthStatus').textContent = 'No depth data available.';
+    document.getElementById('depthStatus').classList.remove('hidden');
+    return;
+  }
+
+  const allCodes = [...new Set(data.flatMap(d => Object.keys(d.params)))].sort();
+
+  const labels = data.map(r => `${r.depth} m`);
+  const palette = [
+    '#58a6ff', '#3fb950', '#f85149', '#d29922',
+    '#a371f7', '#39d3e5', '#ff7b72', '#56d364',
+  ];
+
+  const datasets = allCodes.map((code, idx) => ({
+    label: code,
+    data: data.map(r => r.params[code] ?? null),
+    borderColor: palette[idx % palette.length],
+    backgroundColor: palette[idx % palette.length] + '22',
+    borderWidth: 2,
+    pointRadius: 3,
+    tension: 0.3,
+    spanGaps: true,
+  }));
+
+  depthChartInst = new Chart(document.getElementById('depthChart'), {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'top' },
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Depth', color: '#8b949e' },
+          grid: { color: 'rgba(48,54,61,0.8)' },
+          ticks: { color: '#e6edf3' },
+        },
+        y: {
+          title: { display: true, text: 'Average Value', color: '#8b949e' },
+          grid: { color: 'rgba(48,54,61,0.5)' },
+          ticks: { color: '#8b949e' },
+        }
+      }
+    }
+  });
+}
+</script>
+</body>
+</html>
