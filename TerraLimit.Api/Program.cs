@@ -1,15 +1,15 @@
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
-using TerraLimit.Api.Data;
-using TerraLimit.Api.Endpoints;
-using TerraLimit.Api.Services;
+using TerraLimit.Model.Interfaces;
+using TerraLimit.Model.Services;
+using TerraLimit.Persistence.Data;
+using TerraLimit.Persistence.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddSwaggerGen();
-builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddControllers();
 
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
@@ -20,7 +20,12 @@ var configuration = new ConfigurationBuilder()
 builder.Services.AddSingleton<IConfiguration>(configuration);
 builder.Services.AddDbContext<EcoState>(options => options.UseNpgsql(configuration.GetConnectionString("Default")));
 
-builder.Services.AddScoped<EndpointService>();
+builder.Services.AddScoped<IWeatherService, WeatherService>();
+builder.Services.AddScoped<IWaterService, WaterService>();
+builder.Services.AddScoped<IWaterReadRepository, WaterReadRepository>();
+builder.Services.AddScoped<IWeatherReadRepository, WeatherReadRepository>();
+builder.Services.AddScoped<IBaseReadRepository, BaseReadRepository>();
+builder.Services.AddScoped<IBaseService, BaseService>();
 
 builder.Services.AddCors(options =>
 {
@@ -36,14 +41,12 @@ var app = builder.Build();
 
 app.UseCors("FrontendPolicy");
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.MapWeatherEndpoints();
-app.MapWaterEndpoints();
+app.MapControllers();
 
 app.Run();

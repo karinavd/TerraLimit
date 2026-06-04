@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="TerraLimit.Api/TerraLimit.Api.csproj" />
+  <Project Path="TerraLimit.Model/TerraLimit.Model.csproj" />
+  <Project Path="TerraLimit.Persistence/TerraLimit.Persistence.csproj" />
+</Solution>
