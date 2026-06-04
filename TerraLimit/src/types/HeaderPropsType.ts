@@ -1,5 +1,5 @@
 import type { MarkerType } from './MarkerType';
 
-export type MapComponentProps = {
+export type LocationPickerMapProps = {
   onLocationSelect?: (location: MarkerType) => void;
 };
