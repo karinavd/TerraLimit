@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TerraLimit Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/dashboard/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="shell">
+
+  <div class="header">
+    <h1>TerraLimit Dashboard</h1>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">Depth Profile — All Pollution Parameters</div>
+    </div>
+    <div class="card-body">
+      <div id="depthStatus" class="status">Loading data..</div>
+      <div class="chart-box tall"><canvas id="depthChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">Top 20 Most Polluted Stations</div>
+      <select id="waterTypeSel">
+        <option value="">All types</option>
+      </select>
+    </div>
+    <div class="tscroll">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Station ID</th>
+            <th>Country</th>
+            <th>Type</th>
+            <th>Records</th>
+            <th style="min-width:180px">Pollution Index</th>
+          </tr>
+        </thead>
+        <tbody id="top20Body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">Average Value by Parameter</div>
+    </div>
+    <div class="card-body">
+      <div class="chart-box"><canvas id="barChart"></canvas></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+Chart.defaults.color = '#8b949e';
+Chart.defaults.font.family = '"JetBrains Mono", monospace';
+Chart.defaults.font.size = 11;
+
+const scoreColor = v => v >= 70 ? '#f85149' : v >= 40 ? '#d29922' : '#3fb950';
+const fmtNum = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1000 ? (n/1000).toFixed(1)+'k' : n;
+
+function pillClass(type) {
+  const t = (type || '').toLowerCase();
+  if (t === 'river') return 'pill pill-river';
+  if (t === 'lake') return 'pill pill-lake';
+  if (t === 'groundwater') return 'pill pill-groundwater';
+  return 'pill pill-other';
+}
+
+const POLLUTION_PARAMS = { "BOD": 30, "COD": 100, "NH4": 5, "NO3": 50, "PO4": 10, "ATRAZINE": 0.1, "TL-TOT": 0.002 };
+let globalStations = [];
+let globalRecords = [];
+
+(async () => {
+  try {
+    const res = await fetch('/api/analytics/');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const d = await res.json();
+    
+    globalStations = d.raw_stations || [];
+    globalRecords = d.raw_records || [];
+    
+    initDashboard(d);
+  } catch (e) {
+    const el = document.getElementById('depthStatus');
+    el.textContent = 'Error: ' + e.message;
+  }
+})();
+
+function initDashboard(d) {
+  const { top20, param_summary, depth_profile, water_types } = d;
+
+  const sel = document.getElementById('waterTypeSel');
+  (water_types || []).forEach(wt => {
+    const o = document.createElement('option');
+    o.value = wt;
+    o.textContent = wt;
+    sel.appendChild(o);
+  });
+
+  sel.addEventListener('change', () => {
+    const wt = sel.value;
+    const filteredTop20 = localCalcTop20(wt);
+    renderTop20(filteredTop20);
+  });
+
+  buildDepthChart(depth_profile);
+  document.getElementById('depthStatus').classList.add('hidden');
+  renderTop20(top20);
+
+  const allParams = param_summary;
+  new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+  data: {
+    labels: allParams.map(p => p.name || p.code), 
+    datasets: [{
+      label: 'Average Value',
+      data: allParams.map(p => p.avg_value),
+      backgroundColor: allParams.map((_, i) => `hsla(${[200, 160, 280, 40, 340, 100, 220, 60, 320, 180][i]},65%,55%,.75)`),
+      borderRadius: 5,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          title: (items) => {
+            const p = allParams[items[0].dataIndex];
+            return `${p.name || p.code} (${p.code})`;
+          },
+          afterBody: (items) => {
+            const p = allParams[items[0].dataIndex];
+            const lines = [];
+            if (p.description) lines.push(`${p.description}`);
+            if (p.unit) lines.push(`Unit: ${p.unit}`);
+            if (p.limit_value != null) lines.push(`Limit: ${p.limit_value}`);
+            return lines;
+          }
+        }
+      }
+    },
+    scales: {
+      x: { grid: { color: 'transparent' }, ticks: { color: '#e6edf3' } },
+      y: { grid: { color: 'rgba(48,54,61,0.8)' }, ticks: { color: '#8b949e' } }
+    }
+  }
+});
+}
+function localCalcTop20(waterType) {
+  let stations = globalStations;
+  if (waterType) {
+    const wtLower = waterType.toLowerCase();
+    stations = globalStations.filter(s => (s.waterType || '').toLowerCase() === wtLower);
+  }
+  const stationMap = new Map();
+  stations.forEach(s => { if (s.id) stationMap.set(s.id, s); });
+  const paramMap = new Map(
+    Object.entries(POLLUTION_PARAMS).map(([code, limit]) => [code.toUpperCase(), limit])
+  );
+
+  const byStation = {};
+  globalRecords.forEach(r => {
+    const sid = r.stationId;
+    if (!stationMap.has(sid)) return;
+    const code = String(r.parameterCode || '').toUpperCase();
+    const limit = paramMap.get(code);
+    if (!limit || limit === 0) return;
+    const val = r.value;
+    if (val === null || val === undefined) return;
+    const normalized = Math.min((parseFloat(val) / limit) * 100, 100);
+    if (!byStation[sid]) byStation[sid] = [];
+    byStation[sid].push(normalized);
+  });
+
+  const res = [];
+  Object.keys(byStation).forEach(sid => {
+    const scores = byStation[sid];
+    const info = stationMap.get(sid) || {};
+    res.push({
+      station_id: sid,
+      station_identifier: info.stationIdentifier || sid,
+      country_name: info.countryName || "—",
+      water_type: info.waterType || "—",
+      avg_pollution: Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10,
+      record_count: scores.length
+    });
+  });
+
+  return res.sort((a, b) => b.avg_pollution - a.avg_pollution).slice(0, 20);
+}
+
+
+function renderTop20(top20) {
+  const tbody = document.getElementById('top20Body');
+  tbody.innerHTML = '';
+  top20.forEach((s, i) => {
+    const c = scoreColor(s.avg_pollution);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="mono" style="color:var(--muted)">${i + 1}</td>
+      <td class="mono accent">${s.station_id}</td>
+      <td>${s.country_name}</td>
+      <td><span class="${pillClass(s.water_type)}">${s.water_type || ':'}</span></td>
+      <td class="mono">${fmtNum(s.record_count)}</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar"><div class="bar-fill" style="width:${s.avg_pollution}%;background:${c}"></div></div>
+          <span class="bar-num" style="color:${c}">${s.avg_pollution}</span>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function buildDepthChart(data) {
+  if (!data || data.length === 0) return;
+  const allCodes = [...new Set(data.flatMap(d => Object.keys(d.params)))].sort();
+  const labels = data.map(r => `${r.depth} м`);
+  const palette = ['#58a6ff', '#3fb950', '#f85149', '#d29922', '#a371f7', '#39d3e5', '#ff7b72', '#56d364'];
+
+  const datasets = allCodes.map((code, idx) => ({
+    label: code,
+    data: data.map(r => r.params[code] ?? null),
+    borderColor: palette[idx % palette.length],
+    backgroundColor: palette[idx % palette.length] + '22',
+    borderWidth: 2,
+    pointRadius: 3,
+    tension: 0,
+    spanGaps: true,
+  }));
+
+  new Chart(document.getElementById('depthChart'), {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { grid: { color: 'rgba(48,54,61,0.8)' }, ticks: { color: '#e6edf3' } },
+        y: { grid: { color: 'rgba(48,54,61,0.5)' }, ticks: { color: '#8b949e' } }
+      }
+    }
+  });
+}
+</script>
+</body>
+</html>
