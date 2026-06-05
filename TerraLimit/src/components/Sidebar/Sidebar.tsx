@@ -12,18 +12,29 @@ const Sidebar = ({ selectedPoint }: SidebarProps) => {
   const [isLoading, setIsLoading] = useState(false);
   useEffect(() => {
     if (!selectedPoint) return;
-
     const fetchDetails = async () => {
       setIsLoading(true);
       try {
         const baseURL = 'http://localhost:5088';
-        const response = await fetch(
-          `${baseURL}/${activeCategory}/${selectedPoint.id}`
-        );
+        let endpoint = `${baseURL}/${activeCategory}/${selectedPoint.id}`;
+        console.log(activeCategory);
+        if (activeCategory === 'water/records') {
+          endpoint = `${baseURL}/water/stations/${selectedPoint.id}/records`;
+        } else if (activeCategory === 'water/parameters') {
+          endpoint = `${baseURL}/water/parameters/${selectedPoint.id}`;
+        }
+
+        const response = await fetch(endpoint);
 
         if (response.ok) {
           const data = await response.json();
-          setDetailsData(data);
+          if (Array.isArray(data) && data.length > 0) {
+            setDetailsData(data[0]);
+          } else if (!Array.isArray(data)) {
+            setDetailsData(data);
+          } else {
+            setDetailsData(null);
+          }
         } else {
           setDetailsData(null);
         }
@@ -33,7 +44,6 @@ const Sidebar = ({ selectedPoint }: SidebarProps) => {
         setIsLoading(false);
       }
     };
-
     fetchDetails();
   }, [selectedPoint, activeCategory]);
   if (!selectedPoint) {
@@ -69,12 +79,26 @@ const Sidebar = ({ selectedPoint }: SidebarProps) => {
             return (
               <div
                 key={key}
-                className="flex justify-between border-b border-gray-100 pb-1"
+                className="flex justify-between items-center border-b border-gray-100 pb-1 min-h-[2.5rem]"
               >
-                <span className="text-gray-600 capitalize">
+                <span className="text-gray-600 capitalize shrink-0 pr-2">
                   {key.replace(/([A-Z])/g, ' $1').trim()}:
                 </span>
-                <span className="font-medium">{String(value)}</span>
+                {key === 'currentConditionIcon' ? (
+                  <img
+                    src={
+                      String(value).startsWith('//')
+                        ? `https:${value}`
+                        : String(value)
+                    }
+                    alt="Weather condition"
+                    className="w-10 h-10 ml-auto object-contain drop-shadow-sm"
+                  />
+                ) : (
+                  <span className={`text-right break-words`}>
+                    {String(value)}
+                  </span>
+                )}
               </div>
             );
           })}

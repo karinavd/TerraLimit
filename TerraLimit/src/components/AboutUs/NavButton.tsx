@@ -9,7 +9,7 @@ const NavButton = ({
 }) => {
   return (
     <button
-      className={`${imgClassName} absolute top-1/2 z-50 -translate-y-1/2 cursor-pointer`}
+      className={`${imgClassName} absolute top-1/2 z-20 -translate-y-1/2 cursor-pointer`}
     >
       {<img src={imgSrc} alt={imgAlt} className="w-8 h-8" />}
     </button>
