@@ -9,10 +9,6 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 from django.conf import settings
 
-POLLUTION_PARAMS = {
-    "BOD": 30, "COD": 100, "NH4": 5, "NO3": 50,
-    "PO4": 10, "ATRAZINE": 0.1, "TL-TOT": 0.002
-}
 
 def _get(d: dict, key: str, default=None):
     if not isinstance(d, dict):
@@ -21,6 +17,7 @@ def _get(d: dict, key: str, default=None):
         if k.lower() == key.lower():
             return v
     return default
+
 
 def _fetch_page(path: str, offset: int, limit: int) -> list:
     base = getattr(settings, "TERRALIMIT_API_BASE", "http://127.0.0.1:5088")
@@ -36,6 +33,7 @@ def _fetch_page(path: str, offset: int, limit: int) -> list:
             return []
         raise
 
+
 def _fetch_all(path: str, page_size: int = 2500) -> list:
     first_page = _fetch_page(path, offset=0, limit=page_size)
     if not first_page or len(first_page) < page_size:
@@ -43,7 +41,7 @@ def _fetch_all(path: str, page_size: int = 2500) -> list:
 
     result = list(first_page)
     offsets = range(page_size, page_size * 20, page_size)
-    
+
     with ThreadPoolExecutor(max_workers=5) as executor:
         futures = [executor.submit(_fetch_page, path, offset, page_size) for offset in offsets]
         for fut in futures:
@@ -55,7 +53,14 @@ def _fetch_all(path: str, page_size: int = 2500) -> list:
                 break
     return result
 
-def _calc_top20(stations: list, records: list, water_type: str = "") -> list:
+
+def _calc_top20(stations: list, records: list, parameters: list, water_type: str = "") -> list:
+    param_limits = {
+        str(_get(p, "id")).upper(): float(_get(p, "limitValue"))
+        for p in parameters
+        if _get(p, "id") and _get(p, "limitValue") is not None
+    }
+
     if water_type:
         wt_lower = water_type.lower()
         filtered_stations = [s for s in stations if (_get(s, "waterType") or "").lower() == wt_lower]
@@ -70,12 +75,13 @@ def _calc_top20(stations: list, records: list, water_type: str = "") -> list:
         if sid not in station_map:
             continue
         code = str(_get(r, "parameterCode") or "").upper()
-        if code not in POLLUTION_PARAMS:
+        limit = param_limits.get(code)
+        if not limit:
             continue
         val = _get(r, "value")
         if val is None:
             continue
-        normalized = min(float(val) / POLLUTION_PARAMS[code] * 100, 100)
+        normalized = min(float(val) / limit * 100, 100)
         by_station[sid].append(normalized)
 
     result = []
@@ -87,48 +93,69 @@ def _calc_top20(stations: list, records: list, water_type: str = "") -> list:
             "country_name": _get(info, "countryName") or "—",
             "water_type": _get(info, "waterType") or "—",
             "avg_pollution": round(sum(scores) / len(scores), 1),
-            "record_count": len(scores),
         })
     return sorted(result, key=lambda x: x["avg_pollution"], reverse=True)[:20]
 
-def _calc_depth_profile_all(records: list, station_id: str = "") -> list:
+
+def _calc_depth_profile_all(records: list, parameters: list, station_id: str = "") -> list:
+    param_info = {
+        str(_get(p, "id")).upper(): {
+            "name": _get(p, "name", ""),
+            "limit": _get(p, "limitValue")
+        }
+        for p in parameters if _get(p, "id")
+    }
+
     buckets = defaultdict(lambda: defaultdict(list))
     for r in records:
         if station_id and _get(r, "stationId") != station_id:
             continue
         code = str(_get(r, "parameterCode") or "").upper()
-        if code not in POLLUTION_PARAMS:
+        info = param_info.get(code)
+        if not info:
             continue
         val = _get(r, "value")
         if val is not None:
             depth = round(float(_get(r, "depth", 0) or 0), 1)
-            buckets[depth][code].append(float(val))
+            buckets[depth][info["name"]].append(float(val))
 
     result = []
     for depth in sorted(buckets.keys()):
-        params = {code: round(sum(vals) / len(vals), 4) for code, vals in buckets[depth].items()}
+        params = {name: round(sum(vals) / len(vals), 4) for name, vals in buckets[depth].items()}
         result.append({"depth": depth, "params": params})
     return result
-
 def _calc_param_summary(records: list, parameters: list) -> list:
-    param_name = {_get(p, "id", ""): _get(p, "name", "") for p in parameters if _get(p, "id")}
+    param_info = {
+        str(_get(p, "id")).upper(): {
+            "name": _get(p, "name", ""),
+            "description": _get(p, "description", ""),
+            "limit": _get(p, "limitValue"),
+            "unit": _get(p, "unit", "")
+        }
+        for p in parameters if _get(p, "id")
+    }
+
     agg = defaultdict(list)
     for r in records:
-        code = _get(r, "parameterCode")
+        code = str(_get(r, "parameterCode") or "").upper()
         val = _get(r, "value")
         if code and val is not None:
             agg[code].append(float(val))
 
-    result = [
-        {
+    result = []
+    for code, vs in agg.items():
+        info = param_info.get(code, {})
+        result.append({
             "code": code,
-            "name": param_name.get(code) or code,
+            "name": info.get("name") or code,
+            "description": info.get("description"),
+            "limit_value": info.get("limit"),
+            "unit": info.get("unit"),
             "avg_value": round(sum(vs) / len(vs), 3),
-            "record_count": len(vs),
-        }
-        for code, vs in agg.items()
-    ]
-    return sorted(result, key=lambda x: x["record_count"], reverse=True)
+        })
+    return sorted(result, key=lambda x: x["avg_value"], reverse=True)
+
+
 
 
 def dashboard(request):
@@ -142,15 +169,14 @@ def api_analytics(request):
             f_stations = executor.submit(_fetch_all, "water/stations")
             f_records = executor.submit(_fetch_all, "water/records")
             f_parameters = executor.submit(_fetch_all, "water/parameters")
-            
             stations = f_stations.result()
             records = f_records.result()
             parameters = f_parameters.result()
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=502)
 
-    top20 = _calc_top20(stations, records)
-    depth_profile = _calc_depth_profile_all(records)
+    top20 = _calc_top20(stations, records, parameters)
+    depth_profile = _calc_depth_profile_all(records, parameters)   # ✅ передаємо parameters
     param_summary = _calc_param_summary(records, parameters)
     water_types = sorted({wt for s in stations if (wt := _get(s, "waterType"))})
 
@@ -169,7 +195,8 @@ def api_depth_profile(request):
     station_id = request.GET.get("station_id", "")
     try:
         records = _fetch_all("water/records")
-        data = _calc_depth_profile_all(records, station_id)
+        parameters = _fetch_all("water/parameters")
+        data = _calc_depth_profile_all(records, parameters, station_id)  # ✅ передаємо parameters
         return JsonResponse({"data": data, "station_id": station_id})
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=502)
@@ -185,9 +212,10 @@ def api_station_detail(request, station_id):
             station = json.loads(resp.read())
 
         records = _fetch_all("water/records")
+        parameters = _fetch_all("water/parameters")
         station["parameters"] = _calc_param_summary(
             [r for r in records if _get(r, "stationId") == station_id],
-            [],
+            parameters,
         )
         return JsonResponse(station)
     except Exception as e:
