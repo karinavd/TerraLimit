@@ -39,5 +39,5 @@ export const navbarItems = [
     ],
   },
   { title: 'About Us', href: '/about' },
-  { title: 'Dashboard', href: '/dashboard' },
+  { title: 'Dashboard', href: 'http://127.0.0.1:8000', isExternal: true },
 ];
