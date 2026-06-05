@@ -1,3 +1,4 @@
+{%load static%}
 <!DOCTYPE html>
 <html lang="uk">
 <head>
@@ -5,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TerraLimit Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard/style.css" />
+  <link rel="stylesheet" href="{% static 'dashboard/style.css' %}" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -76,19 +77,20 @@ function pillClass(type) {
   return 'pill pill-other';
 }
 
-const POLLUTION_PARAMS = { "BOD": 30, "COD": 100, "NH4": 5, "NO3": 50, "PO4": 10, "ATRAZINE": 0.1, "TL-TOT": 0.002 };
 let globalStations = [];
 let globalRecords = [];
+let globalParameters = [];
 
 (async () => {
   try {
     const res = await fetch('/api/analytics/');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const d = await res.json();
-    
+
     globalStations = d.raw_stations || [];
     globalRecords = d.raw_records || [];
-    
+    globalParameters = d.raw_parameters || [];
+
     initDashboard(d);
   } catch (e) {
     const el = document.getElementById('depthStatus');
@@ -120,44 +122,44 @@ function initDashboard(d) {
   const allParams = param_summary;
   new Chart(document.getElementById('barChart'), {
     type: 'bar',
-  data: {
-    labels: allParams.map(p => p.name || p.code), 
-    datasets: [{
-      label: 'Average Value',
-      data: allParams.map(p => p.avg_value),
-      backgroundColor: allParams.map((_, i) => `hsla(${[200, 160, 280, 40, 340, 100, 220, 60, 320, 180][i]},65%,55%,.75)`),
-      borderRadius: 5,
-      borderSkipped: false,
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: {
-          title: (items) => {
-            const p = allParams[items[0].dataIndex];
-            return `${p.name || p.code} (${p.code})`;
-          },
-          afterBody: (items) => {
-            const p = allParams[items[0].dataIndex];
-            const lines = [];
-            if (p.description) lines.push(`${p.description}`);
-            if (p.unit) lines.push(`Unit: ${p.unit}`);
-            if (p.limit_value != null) lines.push(`Limit: ${p.limit_value}`);
-            return lines;
+    data: {
+      labels: allParams.map(p => p.name || p.code),
+      datasets: [{
+        label: 'Average Value',
+        data: allParams.map(p => p.avg_value),
+        backgroundColor: allParams.map((_, i) => `hsla(${[200, 160, 280, 40, 340, 100, 220, 60, 320, 180][i % 10]},65%,55%,.75)`),
+        borderRadius: 5,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => {
+              const p = allParams[items[0].dataIndex];
+              return `${p.name || p.code} (${p.code})`;
+            },
+            afterBody: (items) => {
+              const p = allParams[items[0].dataIndex];
+              const lines = [];
+              if (p.description) lines.push(`${p.description}`);
+              if (p.unit) lines.push(`Unit: ${p.unit}`);
+              if (p.limit_value != null) lines.push(`Limit: ${p.limit_value}`);
+              return lines;
+            }
           }
         }
+      },
+      scales: {
+        x: { grid: { color: 'transparent' }, ticks: { color: '#e6edf3' } },
+        y: { grid: { color: 'rgba(48,54,61,0.8)' }, ticks: { color: '#8b949e' } }
       }
-    },
-    scales: {
-      x: { grid: { color: 'transparent' }, ticks: { color: '#e6edf3' } },
-      y: { grid: { color: 'rgba(48,54,61,0.8)' }, ticks: { color: '#8b949e' } }
     }
-  }
-});
+  });
 }
 function localCalcTop20(waterType) {
   let stations = globalStations;
@@ -165,43 +167,39 @@ function localCalcTop20(waterType) {
     const wtLower = waterType.toLowerCase();
     stations = globalStations.filter(s => (s.waterType || '').toLowerCase() === wtLower);
   }
+
   const stationMap = new Map();
   stations.forEach(s => { if (s.id) stationMap.set(s.id, s); });
-  const paramMap = new Map(
-    Object.entries(POLLUTION_PARAMS).map(([code, limit]) => [code.toUpperCase(), limit])
-  );
-
   const byStation = {};
   globalRecords.forEach(r => {
     const sid = r.stationId;
     if (!stationMap.has(sid)) return;
-    const code = String(r.parameterCode || '').toUpperCase();
-    const limit = paramMap.get(code);
-    if (!limit || limit === 0) return;
     const val = r.value;
     if (val === null || val === undefined) return;
-    const normalized = Math.min((parseFloat(val) / limit) * 100, 100);
     if (!byStation[sid]) byStation[sid] = [];
-    byStation[sid].push(normalized);
+    byStation[sid].push(parseFloat(val));
   });
+
+  const allValues = Object.values(byStation).flat();
+  const maxVal = Math.max(...allValues) || 1;
 
   const res = [];
   Object.keys(byStation).forEach(sid => {
     const scores = byStation[sid];
+    const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
     const info = stationMap.get(sid) || {};
     res.push({
       station_id: sid,
       station_identifier: info.stationIdentifier || sid,
       country_name: info.countryName || "—",
       water_type: info.waterType || "—",
-      avg_pollution: Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10,
+      avg_pollution: Math.round((avg / maxVal) * 100 * 10) / 10,
       record_count: scores.length
     });
   });
 
   return res.sort((a, b) => b.avg_pollution - a.avg_pollution).slice(0, 20);
 }
-
 
 function renderTop20(top20) {
   const tbody = document.getElementById('top20Body');
@@ -213,7 +211,7 @@ function renderTop20(top20) {
       <td class="mono" style="color:var(--muted)">${i + 1}</td>
       <td class="mono accent">${s.station_id}</td>
       <td>${s.country_name}</td>
-      <td><span class="${pillClass(s.water_type)}">${s.water_type || ':'}</span></td>
+      <td><span class="${pillClass(s.water_type)}">${s.water_type || '—'}</span></td>
       <td class="mono">${fmtNum(s.record_count)}</td>
       <td>
         <div class="bar-wrap">
@@ -255,6 +253,7 @@ function buildDepthChart(data) {
     }
   });
 }
+
 </script>
 </body>
 </html>
