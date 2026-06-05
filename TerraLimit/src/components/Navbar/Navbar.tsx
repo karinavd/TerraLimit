@@ -36,6 +36,8 @@ const Navbar = ({
             <div key={index} className="flex flex-col">
               <Link
                 to={item.href}
+                target={item.isExternal ? "_blank" : "_self"}
+  rel={item.isExternal ? "noopener noreferrer" : ""}
                 onClick={(e) => {
                   if (item.categoryKey) {
                     e.preventDefault();
