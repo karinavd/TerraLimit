@@ -1,3 +1,4 @@
+{%load static%}
 <!DOCTYPE html>
 <html lang="uk">
 <head>
@@ -5,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TerraLimit Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/dashboard/style.css" />
+  <link rel="stylesheet" href="{% static 'dashboard/style.css' %}" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -169,8 +170,6 @@ function localCalcTop20(waterType) {
 
   const stationMap = new Map();
   stations.forEach(s => { if (s.id) stationMap.set(s.id, s); });
-
-  // Рахуємо середнє значення по кожній станції
   const byStation = {};
   globalRecords.forEach(r => {
     const sid = r.stationId;
@@ -181,7 +180,6 @@ function localCalcTop20(waterType) {
     byStation[sid].push(parseFloat(val));
   });
 
-  // Знаходимо глобальний максимум для нормалізації 0–100
   const allValues = Object.values(byStation).flat();
   const maxVal = Math.max(...allValues) || 1;
 
