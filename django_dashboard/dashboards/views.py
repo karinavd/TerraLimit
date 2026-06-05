@@ -93,6 +93,7 @@ def _calc_top20(stations: list, records: list, parameters: list, water_type: str
             "country_name": _get(info, "countryName") or "—",
             "water_type": _get(info, "waterType") or "—",
             "avg_pollution": round(sum(scores) / len(scores), 1),
+            "record_count": len(scores), 
         })
     return sorted(result, key=lambda x: x["avg_pollution"], reverse=True)[:20]
 
@@ -176,7 +177,7 @@ def api_analytics(request):
         return JsonResponse({"error": str(e)}, status=502)
 
     top20 = _calc_top20(stations, records, parameters)
-    depth_profile = _calc_depth_profile_all(records, parameters)   # ✅ передаємо parameters
+    depth_profile = _calc_depth_profile_all(records, parameters)  
     param_summary = _calc_param_summary(records, parameters)
     water_types = sorted({wt for s in stations if (wt := _get(s, "waterType"))})
 
@@ -186,7 +187,8 @@ def api_analytics(request):
         "depth_profile": depth_profile,
         "water_types": water_types,
         "raw_stations": stations,
-        "raw_records": records
+        "raw_records": records,
+        "raw_parameters": parameters
     })
 
 
@@ -196,7 +198,7 @@ def api_depth_profile(request):
     try:
         records = _fetch_all("water/records")
         parameters = _fetch_all("water/parameters")
-        data = _calc_depth_profile_all(records, parameters, station_id)  # ✅ передаємо parameters
+        data = _calc_depth_profile_all(records, parameters, station_id) 
         return JsonResponse({"data": data, "station_id": station_id})
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=502)
