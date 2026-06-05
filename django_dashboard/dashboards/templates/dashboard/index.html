@@ -117,71 +117,91 @@ function initDashboard(d) {
   document.getElementById('depthStatus').classList.add('hidden');
   renderTop20(top20);
 
-  const top10 = param_summary.slice(0, 10);
+  const allParams = param_summary;
   new Chart(document.getElementById('barChart'), {
     type: 'bar',
-    data: {
-      labels: top10.map(p => p.code),
-      datasets: [{
-        label: 'Середнє значення',
-        data: top10.map(p => p.avg_value),
-        backgroundColor: top10.map((_, i) => `hsla(${[200, 160, 280, 40, 340, 100, 220, 60, 320, 180][i]},65%,55%,.75)`),
-        borderRadius: 5,
-        borderSkipped: false,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { color: 'transparent' }, ticks: { color: '#e6edf3' } },
-        y: { grid: { color: 'rgba(48,54,61,0.8)' }, ticks: { color: '#8b949e' } }
+  data: {
+    labels: allParams.map(p => p.name || p.code), 
+    datasets: [{
+      label: 'Average Value',
+      data: allParams.map(p => p.avg_value),
+      backgroundColor: allParams.map((_, i) => `hsla(${[200, 160, 280, 40, 340, 100, 220, 60, 320, 180][i]},65%,55%,.75)`),
+      borderRadius: 5,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          title: (items) => {
+            const p = allParams[items[0].dataIndex];
+            return `${p.name || p.code} (${p.code})`;
+          },
+          afterBody: (items) => {
+            const p = allParams[items[0].dataIndex];
+            const lines = [];
+            if (p.description) lines.push(`${p.description}`);
+            if (p.unit) lines.push(`Unit: ${p.unit}`);
+            if (p.limit_value != null) lines.push(`Limit: ${p.limit_value}`);
+            return lines;
+          }
+        }
       }
+    },
+    scales: {
+      x: { grid: { color: 'transparent' }, ticks: { color: '#e6edf3' } },
+      y: { grid: { color: 'rgba(48,54,61,0.8)' }, ticks: { color: '#8b949e' } }
     }
-  });
+  }
+});
 }
-
 function localCalcTop20(waterType) {
   let stations = globalStations;
   if (waterType) {
     const wtLower = waterType.toLowerCase();
     stations = globalStations.filter(s => (s.waterType || '').toLowerCase() === wtLower);
   }
-  
   const stationMap = new Map();
   stations.forEach(s => { if (s.id) stationMap.set(s.id, s); });
-  
+  const paramMap = new Map(
+    Object.entries(POLLUTION_PARAMS).map(([code, limit]) => [code.toUpperCase(), limit])
+  );
+
   const byStation = {};
   globalRecords.forEach(r => {
     const sid = r.stationId;
     if (!stationMap.has(sid)) return;
     const code = String(r.parameterCode || '').toUpperCase();
-    if (!POLLUTION_PARAMS[code]) return;
+    const limit = paramMap.get(code);
+    if (!limit || limit === 0) return;
     const val = r.value;
     if (val === null || val === undefined) return;
-    
-    const normalized = Math.min((parseFloat(val) / POLLUTION_PARAMS[code]) * 100, 100);
+    const normalized = Math.min((parseFloat(val) / limit) * 100, 100);
     if (!byStation[sid]) byStation[sid] = [];
     byStation[sid].push(normalized);
   });
-  
+
   const res = [];
   Object.keys(byStation).forEach(sid => {
     const scores = byStation[sid];
     const info = stationMap.get(sid) || {};
     res.push({
-      "station_id": sid,
-      "station_identifier": info.stationIdentifier || sid,
-      "country_name": info.countryName || ":",
-      "water_type": info.waterType || ":",
-      "avg_pollution": Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10,
-      "record_count": scores.length
+      station_id: sid,
+      station_identifier: info.stationIdentifier || sid,
+      country_name: info.countryName || "—",
+      water_type: info.waterType || "—",
+      avg_pollution: Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10,
+      record_count: scores.length
     });
   });
-  
+
   return res.sort((a, b) => b.avg_pollution - a.avg_pollution).slice(0, 20);
 }
+
 
 function renderTop20(top20) {
   const tbody = document.getElementById('top20Body');
@@ -218,7 +238,7 @@ function buildDepthChart(data) {
     backgroundColor: palette[idx % palette.length] + '22',
     borderWidth: 2,
     pointRadius: 3,
-    tension: 0.3,
+    tension: 0,
     spanGaps: true,
   }));
 
