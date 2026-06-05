@@ -31,7 +31,7 @@ namespace TerraLimit.Api.Host.Controllers
         }
 
         [HttpGet("parameters")]
-        public async Task<ActionResult<List<WaterParameterDto>>> GetParameters([FromQuery] int offset = 0, [FromQuery] int limit = 100)
+        public async Task<ActionResult<List<WaterParameterDto>>> GetParameters([FromQuery] int offset = 0, [FromQuery] int limit = 30000)
         {
             var pageItems = await _service.GetPageAsync<WaterParameter, WaterParameterDto, string>(offset, limit);
             return pageItems?.Count == 0 ? NotFound("Page is empty") : Ok(pageItems);

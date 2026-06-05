@@ -82,7 +82,7 @@ export default function MapComponent({
             closeButton
             className="w-34"
           >
-            <div className="text-[13px]">
+            <div className="text-[13px] ">
               <p className="text-muted-foreground">Location: </p>
               {selectedPoint.properties.city && (
                 <p className="text-foreground font-medium">

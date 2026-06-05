@@ -18,7 +18,7 @@ export const teamMembers = [
     image: `${nazarPhoto}`,
     color: 'bg-teal-700',
     github: 'https://github.com/amayorii',
-    linkedin: 'linkedin.com/in/назарій-малашенко-9873a1317',
+    linkedin: 'https://www.linkedin.com/in/назарій-малашенко-9873a1317',
   },
   {
     id: 3,
@@ -27,6 +27,6 @@ export const teamMembers = [
     image: `${karynaPhoto}`,
     color: 'bg-teal-400',
     github: 'https://github.com/karinavd',
-    linkedin: 'linkedin.com/in/karyna-avdieieva-bb2095280',
+    linkedin: 'https://www.linkedin.com/in/karyna-avdieieva-bb2095280',
   },
 ];

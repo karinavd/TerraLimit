@@ -1,18 +1,36 @@
+import { useState } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 import Header from './components/Header/Header';
-import { Outlet } from 'react-router-dom';
+import Navbar from './components/Navbar/Navbar';
 import type { MarkerType } from './types/MarkerType';
 
-const LayoutWithHeader = ({
-  onLocationSelect,
-}: {
+interface LayoutProps {
   onLocationSelect: (location: MarkerType) => void;
-}) => {
+}
+
+const LayoutWithHeader = ({ onLocationSelect }: LayoutProps) => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
+  const location = useLocation();
+  const isAboutUsPage = location.pathname === '/about';
+
   return (
-    <div>
-      <Header onLocationSelect={onLocationSelect} />
-      <main className="h-[calc(100vh-80px)] w-full">
+    <div className="flex flex-col h-full w-full">
+      <Header
+        onLocationSelect={onLocationSelect}
+        isAboutUsPage={isAboutUsPage}
+        isSidebarOpen={isSidebarOpen}
+        toggleSidebar={toggleSidebar}
+      />
+      <Navbar
+        isSidebarOpen={isSidebarOpen}
+        toggleSidebar={toggleSidebar}
+        setIsSidebarOpen={setIsSidebarOpen}
+      />
+      <div className="flex-1 overflow-hidden relative">
         <Outlet />
-      </main>
+      </div>
     </div>
   );
 };

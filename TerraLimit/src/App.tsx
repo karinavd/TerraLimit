@@ -3,15 +3,16 @@ import './App.css';
 import MapComponent from './components/Map/Map';
 import type { MarkerType } from './types/MarkerType';
 import { useState } from 'react';
-import Navbar from './components/Navbar/Navbar';
 import LayoutWithHeader from './LayoutWithHeader';
 import AboutUs from './components/AboutUs/AboutUs';
 import Sidebar from './components/Sidebar/Sidebar';
 import LocationProvider from './LocationContext/LocationProvider';
+
 function App() {
   const [searchedLocation, setSearchedLocation] = useState<MarkerType | null>(
     null
   );
+
   return (
     <LocationProvider>
       <div className="h-screen w-screen overflow-hidden">
@@ -40,10 +41,9 @@ function App() {
                   </div>
                 }
               />
-            </Route>
-            <Route path="/about" element={<AboutUs />} />
 
-            <Route path="/menu" element={<Navbar />} />
+              <Route path="/about" element={<AboutUs />} />
+            </Route>
           </Routes>
         </BrowserRouter>
       </div>

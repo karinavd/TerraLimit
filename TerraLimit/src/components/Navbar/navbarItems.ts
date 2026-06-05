@@ -1,13 +1,14 @@
 export const navbarItems = [
   {
     title: 'Weather',
-    href: '/weather',
+    categoryKey: 'weather/locations',
+    href: '/',
     subItems: [
-      {
-        title: 'Locations',
-        categoryKey: 'weather/locations',
-        href: '/weather/locations',
-      },
+      // {
+      //   title: 'Locations',
+      //   categoryKey: 'weather/locations',
+      //   href: '/weather/locations',
+      // },
       {
         title: 'Observations',
         categoryKey: 'weather/observations',
@@ -27,22 +28,13 @@ export const navbarItems = [
   },
   {
     title: 'Water',
-    href: '/water',
+    categoryKey: 'water/stations',
+    href: '/',
     subItems: [
-      {
-        title: 'Stations',
-        categoryKey: 'water/stations',
-        href: '/water/stations',
-      },
       {
         title: 'Records',
         categoryKey: 'water/records',
         href: '/water/records',
-      },
-      {
-        title: 'Parameters',
-        categoryKey: 'water/parameters',
-        href: '/water/parameters',
       },
     ],
   },

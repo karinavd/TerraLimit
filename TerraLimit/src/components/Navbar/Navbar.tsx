@@ -2,44 +2,77 @@ import { Link, useNavigate } from 'react-router-dom';
 import { navbarItems } from './navbarItems';
 import { useLocations } from '@/LocationContext/useLocations';
 
-const Navbar = () => {
+interface NavbarProps {
+  isSidebarOpen: boolean;
+  toggleSidebar: () => void;
+  setIsSidebarOpen: (val: boolean) => void;
+}
+
+const Navbar = ({
+  isSidebarOpen,
+  toggleSidebar,
+  setIsSidebarOpen,
+}: NavbarProps) => {
   const navigate = useNavigate();
   const { setActiveCategory } = useLocations();
+
   return (
-    <div className="h-16 w-full flex items-center justify-start bg-[#afafaf] px-6 z-50 relative">
-      <nav className="flex gap-8">
-        {navbarItems.map((item, index) => (
-          <div key={index} className="relative group">
-            <Link
-              to={item.href}
-              className="text-white font-['Abril_Fatface'] hover:opacity-80 transition-opacity hover:text-black text-[30px]"
-            >
-              {item.title}
-            </Link>
-            {item.subItems && (
-              <div className="absolute left-0 top-full hidden group-hover:flex flex-col pt-2 z-50">
-                <div className="flex flex-col gap-2 bg-white/90 p-4 rounded-lg shadow-xl min-w-[250px]">
+    <>
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 transition-opacity"
+          onClick={toggleSidebar}
+        />
+      )}
+
+      <div
+        className={`fixed top-20 left-0 w-72  bg-white z-50 transform transition-transform duration-300 ease-in-out border-r border-gray-200 ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+        style={{ height: 'calc(100vh - 80px)' }}
+      >
+        <div className="p-8 flex flex-col gap-6 overflow-y-auto">
+          {navbarItems.map((item, index) => (
+            <div key={index} className="flex flex-col">
+              <Link
+                to={item.href}
+                onClick={(e) => {
+                  if (item.categoryKey) {
+                    e.preventDefault();
+                    setActiveCategory(item.categoryKey);
+                    navigate('/');
+                  }
+                  setIsSidebarOpen(false);
+                }}
+                className="text-gray-800 font-['Abril_Fatface'] hover:opacity-70 transition-opacity text-[28px]"
+              >
+                {item.title}
+              </Link>
+
+              {item.subItems && (
+                <div className="flex flex-col gap-3 pl-4 mt-3 border-l-2 border-gray-300">
                   {item.subItems.map((subItem, subIndex) => (
                     <button
                       key={subIndex}
                       onClick={() => {
                         if (subItem.categoryKey) {
                           setActiveCategory(subItem.categoryKey);
+                          setIsSidebarOpen(false);
                           navigate('/');
                         }
                       }}
-                      className="text-left text-gray-800 text-[20px] font-['Abril_Fatface'] hover:opacity-80 transition-colors cursor-pointer"
+                      className="text-left text-gray-600 text-[20px] font-['Abril_Fatface'] hover:text-black transition-colors"
                     >
                       {subItem.title}
                     </button>
                   ))}
                 </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </nav>
-    </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
   );
 };
 
